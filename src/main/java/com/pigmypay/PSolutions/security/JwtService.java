@@ -1,5 +1,6 @@
 package com.pigmypay.PSolutions.security;
 
+import com.pigmypay.PSolutions.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -22,14 +23,39 @@ public class JwtService {
     private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
 
     // 1. Generate a new Token when someone logs in successfully
-    public String generateToken(UserDetails userDetails) {
+    // src/main/java/com/pigmypay/PSolutions/security/JwtService.java
+// Replace generateToken() with this version
+
+    public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name());
+        claims.put("userId", user.getId());
+        claims.put("name", user.getName());
+
+        // THE SECURITY WALL — tenant and branch travel inside the token
+        if (user.getTenant() != null) {
+            claims.put("tenantId", user.getTenant().getId());
+        }
+        if (user.getBranch() != null) {
+            claims.put("branchId", user.getBranch().getId());
+        }
+
         return Jwts.builder()
-                .setClaims(new HashMap<>())
-                .setSubject(userDetails.getUsername()) // We set this to email in the User model
+                .setClaims(claims)
+                .setSubject(user.getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // Token lasts for 24 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    // Add this helper — controllers will use it
+    public Long extractTenantId(String token) {
+        return extractClaim(token, claims -> claims.get("tenantId", Long.class));
+    }
+
+    public Long extractBranchId(String token) {
+        return extractClaim(token, claims -> claims.get("branchId", Long.class));
     }
 
     // 2. Extract the Username (Email) from an incoming Token

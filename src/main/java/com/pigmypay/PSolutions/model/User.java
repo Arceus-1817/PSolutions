@@ -32,6 +32,15 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role; // ADMIN, MANAGER, or AGENT
 
+    // Add these fields to your existing User.java
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+    @ManyToOne
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
     // ==============================================================
     // Spring Security UserDetails Methods
     // ==============================================================

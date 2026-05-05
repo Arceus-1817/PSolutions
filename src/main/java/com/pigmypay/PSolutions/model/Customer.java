@@ -12,7 +12,7 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(unique = true, nullable = false)
     private String accountNumber;
     private String name;
     private String phoneNumber;
@@ -23,4 +23,11 @@ public class Customer {
 
     private BigDecimal currentBalance = BigDecimal.ZERO;
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Add to Customer.java
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+
 }

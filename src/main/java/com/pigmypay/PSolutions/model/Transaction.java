@@ -29,4 +29,9 @@ public class Transaction {
     private LocalDateTime transactionDate = LocalDateTime.now();
     private String syncStatus = "SYNCED";
     private Boolean isReversed = false;
+
+    // Add to Transaction.java
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 }

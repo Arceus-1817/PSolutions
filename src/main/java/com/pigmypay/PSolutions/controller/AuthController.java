@@ -43,12 +43,13 @@ public class AuthController {
                 // 3. Password matches! Print the token.
                 String token = jwtService.generateToken(user);
 
-                // 4. Send back the token AND the user info so React knows who logged in
+                // In AuthController.login() — add tenantId to the response map
                 return ResponseEntity.ok(Map.of(
-                        "token", token,
-                        "userId", user.getId(),
-                        "name", user.getName(),
-                        "role", user.getRole()
+                        "token",    token,
+                        "userId",   user.getId(),
+                        "name",     user.getName(),
+                        "role",     user.getRole(),
+                        "tenantId", user.getTenant() != null ? user.getTenant().getId() : 1L
                 ));
             }
         }

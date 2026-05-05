@@ -7,4 +7,7 @@ import java.util.List;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     // Allows the app to fetch all customers assigned to a specific field agent
     List<Customer> findByAssignedAgentId(Long agentId);
+    // Add to CustomerRepository.java
+    List<Customer> findByAssignedAgentIdAndTenantId(Long agentId, Long tenantId);
+    List<Customer> findByTenantId(Long tenantId);
 }
