@@ -28,6 +28,18 @@ public class Transaction {
 
     private LocalDateTime transactionDate = LocalDateTime.now();
     private String syncStatus = "SYNCED";
+    // e.g., "SAVINGS_DEPOSIT", "LOAN_REPAYMENT", "LOAN_DISBURSEMENT"
+    @Column(nullable = false)
+    private String transactionCategory = "SAVINGS_DEPOSIT";
+
+    // If this transaction is paying off a loan, link it here. If it's just savings, leave it null.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "loan_id", nullable = true)
+    private Loan associatedLoan;
+
+    // e.g., "UNSETTLED" (in agent's pocket) or "SETTLED" (in branch safe)
+    @Column(nullable = false)
+    private String settlementStatus = "UNSETTLED";
     private Boolean isReversed = false;
 
     // Add to Transaction.java

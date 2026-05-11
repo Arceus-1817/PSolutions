@@ -35,6 +35,10 @@ public class SecurityConfig {
                         // NEW: Always allow the browser's invisible "Preflight" requests!
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+//                                .requestMatchers("/api/customers/**").authenticated()
+//                                .requestMatchers("/api/transactions/**").authenticated()
+                                .requestMatchers("/api/users/**","/api/superadmin/**","/api/routes/**", "/api/branches/**", "/api/customers/**", "/api/transactions/**", "/api/stats/**", "/api/settlements/**", "/api/tenants/**").authenticated()
+// Or whatever role-based logic you are using for the other working endpoints
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

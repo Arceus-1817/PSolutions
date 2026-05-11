@@ -9,46 +9,50 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
+@EnableScheduling
 public class PSolutionsApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(PSolutionsApplication.class, args);
 	}
 
-	// NEW: The Bootstrapper!
-	// This runs once when you click "Play". It checks if the admin exists, and if not, creates them.
+	// ─── THE BOOTSTRAPPER ───────────────────────────────────────────
+	// Runs once on startup. Automatically rebuilds the System Admin
+	// if the database is ever wiped.
 	@Bean
 	CommandLineRunner initDatabase(UserRepository userRepository,
 								   TenantRepository tenantRepository,
 								   PasswordEncoder passwordEncoder) {
 		return args -> {
-			// Create default tenant first
-			Tenant defaultTenant;
+
+			// 1. Create the Master Tenant (HQ) if it doesn't exist
+			Tenant hqTenant;
 			var existingTenant = tenantRepository.findAll();
 			if (existingTenant.isEmpty()) {
-				defaultTenant = new Tenant();
-				defaultTenant.setCompanyName("PigmyPay HQ");
-				defaultTenant.setPlan("ENTERPRISE");
-				defaultTenant = tenantRepository.save(defaultTenant);
-				System.out.println("✅ DEFAULT TENANT CREATED");
+				hqTenant = new Tenant();
+				hqTenant.setCompanyName("PigmyPay System HQ");
+				hqTenant.setPlan("ENTERPRISE");
+				hqTenant = tenantRepository.save(hqTenant);
+				System.out.println("✅ MASTER TENANT CREATED");
 			} else {
-				defaultTenant = existingTenant.get(0);
+				hqTenant = existingTenant.get(0);
 			}
 
-			// Create admin if not exists
-			if (userRepository.findByEmail("admin@pigmypay.com").isEmpty()) {
-				User admin = new User();
-				admin.setName("Regional Manager");
-				admin.setEmail("admin@pigmypay.com");
-				admin.setPassword(passwordEncoder.encode("admin123"));
-				admin.setRole(Role.ADMIN);
-				admin.setPhoneNumber("0000000000");
-				admin.setTenant(defaultTenant);
-				userRepository.save(admin);
-				System.out.println("✅ DEFAULT ADMIN CREATED");
+			// 2. Create the SYSTEM_ADMIN (God Mode) if it doesn't exist
+			if (userRepository.findByEmail("patil.shreyansh.18@gmail.com").isEmpty()) {
+				User superAdmin = new User();
+				superAdmin.setName("System Owner");
+				superAdmin.setEmail("patil.shreyansh.18@gmail.com"); // Distinct email
+				superAdmin.setPassword(passwordEncoder.encode("Snp@1817")); // Default password
+				superAdmin.setRole(Role.SYSTEM_ADMIN); // <-- 4-Tier God Mode Role
+				superAdmin.setPhoneNumber("9999999999");
+				superAdmin.setTenant(hqTenant);
+				userRepository.save(superAdmin);
+				System.out.println("✅ SYSTEM ADMIN CREATED (Login: patil.shreyansh.18@gmail.com / Snp@1817)");
 			}
 		};
 	}

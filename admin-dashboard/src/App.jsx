@@ -2,15 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminDashboard from './AdminDashboard';
+import SuperAdminDashboard from './SuperAdminDashboard'; // <-- ADDED FOR 4-TIER
 import './index.css';
 
-// ─── Shared design tokens (light theme for public pages) ─────────────────────
 const BASE_URL = 'http://localhost:8085';
-
-// ─── Axios instance with default base URL ────────────────────────────────────
 const api = axios.create({ baseURL: BASE_URL });
-
-// ─── Helper: build auth header ───────────────────────────────────────────────
 const authHeader = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -94,28 +90,14 @@ function LandingPage() {
       `}</style>
 
       <div className="lp-body">
-        {/* Nav */}
         <nav className="lp-nav">
           <div className="lp-logo">Pigmy<span>Pay</span></div>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-            <button
-              className="lp-btn-sec"
-              style={{ padding:'9px 22px', fontSize:14 }}
-              onClick={() => navigate('/login')}
-            >
-              Sign in
-            </button>
-            <button
-              className="lp-btn-main"
-              style={{ padding:'9px 22px', fontSize:14 }}
-              onClick={() => navigate('/login')}
-            >
-              Get started →
-            </button>
+            <button className="lp-btn-sec" style={{ padding:'9px 22px', fontSize:14 }} onClick={() => navigate('/login')}>Sign in</button>
+            <button className="lp-btn-main" style={{ padding:'9px 22px', fontSize:14 }} onClick={() => navigate('/login')}>Get started →</button>
           </div>
         </nav>
 
-        {/* Hero */}
         <section className="lp-hero">
           <div className={`lp-anim ${mounted ? 'in' : ''}`} style={{ animationDelay:'.05s' }}>
             <div className="lp-eyebrow"><span className="lp-dot" />Now in production</div>
@@ -127,12 +109,8 @@ function LandingPage() {
             Replace paper ledgers with a secure, real-time digital system. Field agents collect faster. Branch managers see everything live. Customers trust every rupee.
           </p>
           <div className={`lp-cta-row lp-anim ${mounted ? 'in' : ''}`} style={{ animationDelay:'.28s' }}>
-            <button className="lp-btn-main" onClick={() => navigate('/login')}>
-              Access your portal →
-            </button>
-            <button className="lp-btn-sec" onClick={() => alert('Demo booking coming in Phase 3')}>
-              Book a demo
-            </button>
+            <button className="lp-btn-main" onClick={() => navigate('/login')}>Access your portal →</button>
+            <button className="lp-btn-sec" onClick={() => alert('Demo booking coming in Phase 3')}>Book a demo</button>
           </div>
           <div className={`lp-stats lp-anim ${mounted ? 'in' : ''}`} style={{ animationDelay:'.36s' }}>
             {[
@@ -149,12 +127,9 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* Features */}
         <section className="lp-features">
           <div className="lp-features-inner">
-            <h2 className="lp-feat-head">
-              Everything your<br /><em>finance company needs.</em>
-            </h2>
+            <h2 className="lp-feat-head">Everything your<br /><em>finance company needs.</em></h2>
             <div className="lp-feat-grid">
               {features.map(f => (
                 <div key={f.title} className="lp-feat-card">
@@ -167,24 +142,14 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing */}
         <section className="lp-pricing">
           <h2 className="lp-pricing-head">Simple, honest pricing</h2>
           <p className="lp-pricing-sub">No hidden fees. Cancel any time. Start free.</p>
           <div className="lp-plans">
             {[
-              {
-                name: 'Starter', price: '₹999', period: '/month',
-                features: ['Up to 5 agents', '1 branch', 'Daily collection logs', 'Customer passbook', 'Email support'],
-              },
-              {
-                name: 'Growth', price: '₹2,499', period: '/month', featured: true,
-                features: ['Up to 25 agents', '5 branches', 'All Starter features', 'Analytics dashboard', 'WhatsApp receipts', 'Priority support'],
-              },
-              {
-                name: 'Enterprise', price: 'Custom', period: 'contact us',
-                features: ['Unlimited agents', 'Unlimited branches', 'All Growth features', 'Custom integrations', 'SLA guarantee', 'Dedicated manager'],
-              },
+              { name: 'Starter', price: '₹999', period: '/month', features: ['Up to 5 agents', '1 branch', 'Daily collection logs', 'Customer passbook', 'Email support'] },
+              { name: 'Growth', price: '₹2,499', period: '/month', featured: true, features: ['Up to 25 agents', '5 branches', 'All Starter features', 'Analytics dashboard', 'WhatsApp receipts', 'Priority support'] },
+              { name: 'Enterprise', price: 'Custom', period: 'contact us', features: ['Unlimited agents', 'Unlimited branches', 'All Growth features', 'Custom integrations', 'SLA guarantee', 'Dedicated manager'] },
             ].map(p => (
               <div key={p.name} className={`lp-plan${p.featured ? ' featured' : ''}`}>
                 <div className="lp-plan-name">{p.name}</div>
@@ -194,14 +159,7 @@ function LandingPage() {
                   {p.features.map(f => <li key={f}>{f}</li>)}
                 </ul>
                 <button
-                  style={{
-                    width:'100%', padding:'13px', borderRadius:'50px', fontSize:14,
-                    fontFamily:'DM Sans, sans-serif', fontWeight:600, cursor:'pointer',
-                    border: p.featured ? 'none' : '1.5px solid rgba(0,0,0,.2)',
-                    background: p.featured ? '#4ecb82' : 'transparent',
-                    color: p.featured ? '#000' : 'inherit',
-                    transition:'all .2s',
-                  }}
+                  style={{ width:'100%', padding:'13px', borderRadius:'50px', fontSize:14, fontFamily:'DM Sans, sans-serif', fontWeight:600, cursor:'pointer', border: p.featured ? 'none' : '1.5px solid rgba(0,0,0,.2)', background: p.featured ? '#4ecb82' : 'transparent', color: p.featured ? '#000' : 'inherit', transition:'all .2s' }}
                   onClick={() => navigate('/login')}
                 >
                   {p.featured ? 'Start free trial' : 'Get started'}
@@ -211,7 +169,6 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="lp-footer">
           <div className="lp-footer-logo">Pigmy<span>Pay</span></div>
           <div style={{ fontSize:13 }}>© 2025 PigmyPay. Built for India's micro-finance sector.</div>
@@ -227,7 +184,7 @@ function LandingPage() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 2. LOGIN PAGE
+// 2. LOGIN PAGE (4-TIER UPDATED)
 // ═══════════════════════════════════════════════════════════════════════════════
 function LoginPage({ setUser }) {
   const [email, setEmail]       = useState('');
@@ -245,7 +202,10 @@ function LoginPage({ setUser }) {
       const userData = res.data;
       setUser(userData);
 
-      if (userData.role === 'ADMIN' || userData.role === 'MANAGER') {
+      // 4-TIER REDIRECT LOGIC
+      if (userData.role === 'SYSTEM_ADMIN') {
+        navigate('/superadmin');
+      } else if (userData.role === 'ADMIN' || userData.role === 'MANAGER') {
         navigate('/admin');
       } else {
         navigate('/agent');
@@ -268,155 +228,70 @@ function LoginPage({ setUser }) {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
-        .login-wrap {
-          min-height: 100vh; display: flex;
-          background: #0d0f12;
-          font-family: 'DM Mono', monospace;
-        }
-        .login-left {
-          flex: 1; display: flex; align-items: center; justify-content: center;
-          padding: 48px; position: relative; overflow: hidden;
-        }
-        .login-left::before {
-          content: '';
-          position: absolute; inset: 0;
-          background:
-            radial-gradient(ellipse at 20% 50%, rgba(0,255,136,.07) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 20%, rgba(59,130,246,.05) 0%, transparent 50%);
-          pointer-events: none;
-        }
-        .login-grid {
-          position: absolute; inset: 0; opacity: .03;
-          background-image: linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px);
-          background-size: 48px 48px;
-        }
-        .login-card {
-          width: 100%; max-width: 400px; position: relative; z-index: 1;
-        }
-        .login-logo {
-          font-family: 'DM Serif Display', serif;
-          font-size: 26px; color: #f0f0f0; letter-spacing: -.02em; margin-bottom: 6px;
-        }
+        .login-wrap { min-height: 100vh; display: flex; background: #0d0f12; font-family: 'DM Mono', monospace; }
+        .login-left { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px; position: relative; overflow: hidden; }
+        .login-left::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(0,255,136,.07) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(59,130,246,.05) 0%, transparent 50%); pointer-events: none; }
+        .login-grid { position: absolute; inset: 0; opacity: .03; background-image: linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 48px 48px; }
+        .login-card { width: 100%; max-width: 400px; position: relative; z-index: 1; }
+        .login-logo { font-family: 'DM Serif Display', serif; font-size: 26px; color: #f0f0f0; letter-spacing: -.02em; margin-bottom: 6px; }
         .login-logo span { color: #00ff88; }
         .login-tagline { font-size: 11px; color: #4a5568; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 44px; }
         .login-field { margin-bottom: 16px; }
         .login-label { display: block; font-size: 10px; color: #4a5568; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
-        .login-input {
-          width: 100%; padding: 13px 16px;
-          background: #161b22; border: 1px solid #1e2530;
-          color: #e2e8f0; border-radius: 10px; font-size: 13px;
-          font-family: 'DM Mono', monospace; outline: none;
-          transition: border-color .2s, box-shadow .2s; box-sizing: border-box;
-        }
+        .login-input { width: 100%; padding: 13px 16px; background: #161b22; border: 1px solid #1e2530; color: #e2e8f0; border-radius: 10px; font-size: 13px; font-family: 'DM Mono', monospace; outline: none; transition: border-color .2s, box-shadow .2s; box-sizing: border-box; }
         .login-input:focus { border-color: #00ff88; box-shadow: 0 0 0 3px rgba(0,255,136,.12); }
         .login-input::placeholder { color: #2d3748; }
-        .login-error {
-          background: rgba(255,71,87,.08); border: 1px solid rgba(255,71,87,.2);
-          color: #ff6b6b; font-size: 12px; padding: 10px 14px;
-          border-radius: 8px; margin-bottom: 16px;
-        }
-        .login-btn {
-          width: 100%; padding: 14px; background: #00ff88; color: #000;
-          font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px;
-          border: none; border-radius: 10px; cursor: pointer;
-          transition: all .18s; letter-spacing: .02em;
-        }
+        .login-error { background: rgba(255,71,87,.08); border: 1px solid rgba(255,71,87,.2); color: #ff6b6b; font-size: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+        .login-btn { width: 100%; padding: 14px; background: #00ff88; color: #000; font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px; border: none; border-radius: 10px; cursor: pointer; transition: all .18s; letter-spacing: .02em; }
         .login-btn:hover:not(:disabled) { background: #00cc6a; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,255,136,.25); }
         .login-btn:disabled { opacity: .5; cursor: not-allowed; }
         .login-hint { margin-top: 20px; font-size: 11px; color: #2d3748; text-align: center; line-height: 1.7; }
         .login-hint code { color: #4a5568; background: #161b22; padding: 2px 6px; border-radius: 4px; }
-        @keyframes login-shake {
-          0%,100%{transform:translateX(0)}
-          20%,60%{transform:translateX(-8px)}
-          40%,80%{transform:translateX(8px)}
-        }
+        @keyframes login-shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
         .login-shake { animation: login-shake .4s ease; }
-        .login-right {
-          width: 420px; background: #060809;
-          border-left: 1px solid #1e2530;
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          padding: 48px; gap: 0;
-        }
+        .login-right { width: 420px; background: #060809; border-left: 1px solid #1e2530; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px; gap: 0; }
         @media (max-width: 768px) { .login-right { display: none; } }
-        .login-portal-card {
-          width: 100%; background: #111318; border: 1px solid #1e2530;
-          border-radius: 14px; padding: 22px; margin-bottom: 12px;
-          transition: border-color .2s;
-        }
+        .login-portal-card { width: 100%; background: #111318; border: 1px solid #1e2530; border-radius: 14px; padding: 22px; margin-bottom: 12px; transition: border-color .2s; }
         .login-portal-card:hover { border-color: #2a3441; }
         .login-portal-icon { font-size: 22px; margin-bottom: 12px; }
         .login-portal-title { font-size: 13px; color: #e2e8f0; font-weight: 500; margin-bottom: 5px; }
         .login-portal-desc { font-size: 11px; color: #4a5568; line-height: 1.6; }
-        .login-portal-badge {
-          display: inline-block; margin-top: 10px;
-          padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600;
-        }
+        .login-portal-badge { display: inline-block; margin-top: 10px; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
       `}</style>
 
       <div className="login-wrap">
-        {/* Left — form */}
         <div className="login-left">
           <div className="login-grid" />
           <div className={`login-card ${shake ? 'login-shake' : ''}`}>
             <div className="login-logo">Pigmy<span>Pay</span></div>
             <div className="login-tagline">Secure portal access</div>
-
             <div className="login-field">
               <label className="login-label">Email address</label>
-              <input
-                className="login-input"
-                type="email"
-                placeholder="admin@pigmypay.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                onKeyDown={onKeyDown}
-                autoComplete="email"
-              />
+              <input className="login-input" type="email" placeholder="admin@pigmypay.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={onKeyDown} autoComplete="email" />
             </div>
-
             <div className="login-field" style={{ marginBottom: 20 }}>
               <label className="login-label">Password</label>
-              <input
-                className="login-input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={onKeyDown}
-                autoComplete="current-password"
-              />
+              <input className="login-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={onKeyDown} autoComplete="current-password" />
             </div>
-
             {error && <div className="login-error">{error}</div>}
-
-            <button className="login-btn" onClick={handleLogin} disabled={loading}>
-              {loading ? 'Authenticating…' : 'Access portal →'}
-            </button>
-
-            <div className="login-hint">
-              Default admin: <code>admin@pigmypay.com</code> / <code>admin123</code>
-            </div>
+            <button className="login-btn" onClick={handleLogin} disabled={loading}>{loading ? 'Authenticating…' : 'Access portal →'}</button>
+            <div className="login-hint">Default admin: <code>admin@pigmypay.com</code> / <code>admin123</code></div>
           </div>
         </div>
 
-        {/* Right — portal directory */}
         <div className="login-right">
           <div style={{ width:'100%', marginBottom:24 }}>
             <div style={{ fontSize:10, color:'#2d3748', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:18 }}>Portal directory</div>
             {[
-              { icon:'🛡️', title:'Admin / Manager', desc:'Branch management, agent onboarding, analytics dashboard', badge:'ADMIN · MANAGER', badgeColor:'rgba(139,92,246,.15)', badgeText:'#8b5cf6' },
+              { icon:'🛡️', title:'System Admin', desc:'Create and manage entire SaaS companies', badge:'SYSTEM ADMIN', badgeColor:'rgba(255,71,87,.15)', badgeText:'#ff4757' },
+              { icon:'🏢', title:'Admin / Manager', desc:'Branch management, agent onboarding, analytics dashboard', badge:'ADMIN · MANAGER', badgeColor:'rgba(139,92,246,.15)', badgeText:'#8b5cf6' },
               { icon:'🚶', title:'Field agent', desc:'Customer search, deposit logging, daily collection targets', badge:'AGENT', badgeColor:'rgba(0,255,136,.1)', badgeText:'#00ff88' },
-              { icon:'👤', title:'End customer', desc:'View passbook, check balance, flag disputes', badge:'COMING SOON', badgeColor:'rgba(255,165,2,.1)', badgeText:'#ffa502' },
             ].map(p => (
               <div key={p.title} className="login-portal-card">
                 <div className="login-portal-icon">{p.icon}</div>
                 <div className="login-portal-title">{p.title}</div>
                 <div className="login-portal-desc">{p.desc}</div>
-                <span className="login-portal-badge" style={{ background: p.badgeColor, color: p.badgeText }}>
-                  {p.badge}
-                </span>
+                <span className="login-portal-badge" style={{ background: p.badgeColor, color: p.badgeText }}>{p.badge}</span>
               </div>
             ))}
           </div>
@@ -427,13 +302,15 @@ function LoginPage({ setUser }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 3. AGENT DASHBOARD (full — unchanged logic, improved styling)
+// 3. AGENT DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
 function AgentDashboard({ user, handleLogout }) {
   const [customers, setCustomers]           = useState([]);
   const [selectedCustomer, setSelected]     = useState(null);
   const [depositAmount, setDepositAmount]   = useState('');
   const [paymentMode, setPaymentMode]       = useState('CASH');
+  const [txType, setTxType]                 = useState('SAVINGS'); // 'SAVINGS' or 'EMI'
+  const [activeLoan, setActiveLoan]         = useState(null); // Tracks if they owe money
   const [transactions, setTransactions]     = useState([]);
   const [status, setStatus]                 = useState({ type:'', message:'' });
   const [searchTerm, setSearch]             = useState('');
@@ -442,75 +319,109 @@ function AgentDashboard({ user, handleLogout }) {
   const [loadingCustomers, setLoadingC]     = useState(true);
   const [isSaving, setIsSaving]             = useState(false);
 
-  const getAuth = () => authHeader(user.token);
+  const getAuth = () => ({ headers: { Authorization: `Bearer ${user.token}` } });
 
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = async () => {
     setLoadingC(true);
     try {
-      const res = await api.get(`/api/customers/agent/${user.userId}`, getAuth());
-      setCustomers(Array.isArray(res.data) ? res.data : []);
+      const ts = Date.now();
+      const res = await api.get(`/api/customers/agent/${user.userId}?t=${ts}`, getAuth());
+      const myCustomers = Array.isArray(res.data) ? res.data : [];
+
+      // Sort them by route sequence!
+      myCustomers.sort((a, b) => (a.routeSequence || 999) - (b.routeSequence || 999));
+      setCustomers(myCustomers);
     } catch (e) {
       if (e.response?.status === 401 || e.response?.status === 403) handleLogout();
     } finally { setLoadingC(false); }
-  }, [user.userId, user.token]);
+  };
 
-  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
+  useEffect(() => { fetchCustomers(); }, []);
 
   const handleSelectCustomer = async (customer) => {
     setSelected(customer);
     setShowAddForm(false);
     setStatus({ type:'', message:'' });
+    setTxType('SAVINGS');
+    setDepositAmount('');
+    setActiveLoan(null);
+
+    const ts = Date.now();
     try {
-      const res = await api.get(`/api/transactions/history/${customer.id}`, getAuth());
-      setTransactions(Array.isArray(res.data) ? res.data : []);
-    } catch { setTransactions([]); }
+      // 1. Fetch Transaction History
+      const txRes = await api.get(`/api/transactions/history/${customer.id}?t=${ts}`, getAuth());
+      setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
+
+      // 2. Fetch Active Loans to see if they owe an EMI today
+      const loanRes = await api.get(`/api/loans/customer/${customer.id}?t=${ts}`, getAuth());
+      const loans = Array.isArray(loanRes.data) ? loanRes.data : [];
+      const active = loans.find(l => l.status === 'ACTIVE');
+      if (active) {
+        setActiveLoan(active);
+        setTxType('EMI'); // Auto-default to EMI collection if they have a loan
+        setDepositAmount(active.dailyEmiAmount || '');
+      }
+    } catch (e) {
+      console.warn("Could not fetch history or loans", e);
+      setTransactions([]);
+    }
   };
 
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) return;
+    setIsSaving(true);
+
     const body = {
       customerId: selectedCustomer.id,
       agentId: user.userId,
       amount: parseFloat(depositAmount),
-      paymentMode,
+      paymentMode
     };
+
     try {
-      await api.post('/api/transactions/deposit', body, getAuth());
-      setStatus({ type:'success', message:`₹${depositAmount} deposited successfully!` });
+      // Route the payment to the correct Java endpoint based on the toggle!
+      if (txType === 'EMI') {
+        await api.post('/api/transactions/loan-emi', body, getAuth());
+        setStatus({ type:'success', message:`EMI of ₹${depositAmount} collected successfully!` });
+      } else {
+        await api.post('/api/transactions/deposit', body, getAuth());
+        setStatus({ type:'success', message:`Savings deposit of ₹${depositAmount} successful!` });
+      }
+
       setDepositAmount('');
-      fetchCustomers();
-      handleSelectCustomer(selectedCustomer);
-    } catch { setStatus({ type:'error', message:'Deposit failed. Try again.' }); }
+      await fetchCustomers();
+      handleSelectCustomer(selectedCustomer); // Refresh their profile
+    } catch (e) {
+      setStatus({ type:'error', message: e.response?.data || 'Transaction failed. Try again.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddCustomer = async () => {
-      if (!newCustomer.name || !newCustomer.accountNumber) return;
+    if (!newCustomer.name || !newCustomer.accountNumber || isSaving) return;
+    setIsSaving(true);
+    const payload = { ...newCustomer, assignedAgent: { id: user.userId } };
 
-      setIsSaving(true); // 1. Lock the button immediately
-
-      const payload = { ...newCustomer, assignedAgent: { id: user.userId } };
-      try {
-        await api.post('/api/customers', payload, getAuth());
-        setStatus({ type:'success', message:`${newCustomer.name} added!` });
-        setShowAddForm(false);
-        setNewCustomer({ name:'', accountNumber:'', phoneNumber:'', currentBalance:0 });
-
-        await fetchCustomers(); // 2. Wait for the fresh list from the database
-
-      } catch (e) {
-        // 3. If the database rejects a duplicate account number, it drops an error here!
-        setStatus({ type:'error', message:'Failed. Does this account number already exist?' });
-      } finally {
-        setIsSaving(false); // 4. Unlock the button
-      }
-    };
+    try {
+      await api.post('/api/customers', payload, getAuth());
+      setStatus({ type:'success', message:`${newCustomer.name} added!` });
+      await new Promise(r => setTimeout(r, 300));
+      await fetchCustomers();
+      setShowAddForm(false);
+      setNewCustomer({ name:'', accountNumber:'', phoneNumber:'', currentBalance:0 });
+      setSearch('');
+    } catch (e) {
+      setStatus({ type:'error', message:'Failed to create customer.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filtered = customers.filter(c =>
-    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.accountNumber?.includes(searchTerm)
+    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.accountNumber?.includes(searchTerm)
   );
   const totalPortfolio = customers.reduce((s, c) => s + (c.currentBalance || 0), 0);
-
   return (
     <>
       <style>{`
@@ -556,7 +467,8 @@ function AgentDashboard({ user, handleLogout }) {
         .ag-mode-btn { flex:1; padding: 9px; border-radius: 8px; font-size: 12px; font-family: 'DM Mono', monospace; cursor: pointer; transition: all .15s; border: 1px solid #1e2530; background: transparent; color: #718096; }
         .ag-mode-btn.active { background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.3); color: #00ff88; }
         .ag-confirm-btn { width: 100%; padding: 13px; background: #00ff88; color: #000; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; font-family: 'DM Mono', monospace; cursor: pointer; transition: all .18s; }
-        .ag-confirm-btn:hover { background: #00cc6a; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,255,136,.2); }
+        .ag-confirm-btn:hover:not(:disabled) { background: #00cc6a; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,255,136,.2); }
+        .ag-confirm-btn:disabled { cursor: not-allowed; opacity: 0.7; }
         .ag-history-title { font-size: 12px; color: #4a5568; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 14px; }
         .ag-txn-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e2530; align-items: center; }
         .ag-txn-amt { color: #00ff88; font-size: 14px; font-weight: 500; }
@@ -568,38 +480,34 @@ function AgentDashboard({ user, handleLogout }) {
         .ag-form-input { width: 100%; background: #111318; border: 1px solid #1e2530; color: #e2e8f0; border-radius: 7px; padding: 10px 12px; font-size: 12px; font-family: 'DM Mono', monospace; outline: none; box-sizing: border-box; margin-bottom: 10px; transition: border-color .15s; }
         .ag-form-input:focus { border-color: #00ff8866; }
         .ag-form-input::placeholder { color: #2d3748; }
+        .ag-loan-badge { background: rgba(255,165,2,.15); color: #ffa502; border: 1px solid rgba(255,165,2,.3); padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: .05em; }
+        .tx-toggle-container { display: flex; background: #111318; border: 1px solid #1e2530; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
+        .tx-toggle-btn { flex: 1; text-align: center; padding: 8px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .2s; color: #718096; }
+        .tx-toggle-btn.active.savings { background: rgba(0,255,136,.1); color: #00ff88; }
+        .tx-toggle-btn.active.emi { background: rgba(255,165,2,.1); color: #ffa502; }
       `}</style>
 
       <div className="ag-wrap">
-        {/* Header */}
         <header className="ag-header">
-          <div className="ag-logo">Pigmy<span>Pay</span> <span style={{ fontSize:11, color:'#2d3748', fontFamily:'DM Mono,monospace', fontWeight:400 }}>/ Field</span></div>
+          <div className="ag-logo">Pigmy<span>Pay</span> <span style={{ fontSize:11, color:'#2d3748' }}>/ Field</span></div>
           <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-            <div className="ag-user">Logged in as <strong>{user.name}</strong> · {user.role}</div>
+            <div className="ag-user">Logged in as <strong>{user.name}</strong></div>
             <button className="ag-logout" onClick={handleLogout}>Sign out</button>
           </div>
         </header>
 
         <div className="ag-main">
-          {/* Left panel */}
+          {/* LEFT SIDEBAR: CUSTOMER LIST */}
           <div className="ag-left">
             <div className="ag-portfolio">
-              <div className="ag-portfolio-label">Total portfolio</div>
+              <div className="ag-portfolio-label">Total deposits</div>
               <div className="ag-portfolio-value"><span>₹</span>{totalPortfolio.toLocaleString('en-IN')}</div>
-              <div className="ag-portfolio-sub">{customers.length} customers · {user.name}</div>
+              <div className="ag-portfolio-sub">{customers.length} customers assigned</div>
             </div>
 
             <div className="ag-search-row">
-              <input
-                className="ag-search"
-                placeholder="Search name or account…"
-                value={searchTerm}
-                onChange={e => setSearch(e.target.value)}
-              />
-              <button
-                className="ag-add-btn"
-                onClick={() => { setShowAddForm(!showAddForm); setSelected(null); setStatus({type:'',message:''}); }}
-              >
+              <input className="ag-search" placeholder="Search name or account…" value={searchTerm} onChange={e => setSearch(e.target.value)} />
+              <button className="ag-add-btn" onClick={() => { setShowAddForm(!showAddForm); setSelected(null); }}>
                 {showAddForm ? '✕' : '+ New'}
               </button>
             </div>
@@ -610,35 +518,18 @@ function AgentDashboard({ user, handleLogout }) {
                   <input className="ag-form-input" placeholder="Full name *" value={newCustomer.name} onChange={e => setNewCustomer({ ...newCustomer, name: e.target.value })} />
                   <input className="ag-form-input" placeholder="Account number *" value={newCustomer.accountNumber} onChange={e => setNewCustomer({ ...newCustomer, accountNumber: e.target.value })} />
                   <input className="ag-form-input" placeholder="Phone number" value={newCustomer.phoneNumber} onChange={e => setNewCustomer({ ...newCustomer, phoneNumber: e.target.value })} />
-<button
-  className="ag-confirm-btn"
-  style={{ fontSize:12, padding:'10px', opacity: isSaving ? 0.7 : 1 }}
-  onClick={handleAddCustomer}
-  disabled={isSaving} // Disables the button while saving
->
-  {isSaving ? 'Saving...' : 'Save customer'}
-</button>                </div>
+                  <button className="ag-confirm-btn" style={{ fontSize:12, padding:'10px' }} onClick={handleAddCustomer} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save customer'}
+                  </button>
+                  {status.message && status.type === 'error' && <div style={{ marginTop:10, fontSize:11, color:'#ff4757' }}>{status.message}</div>}
+                </div>
               </div>
             )}
 
             <div className="ag-customer-list">
-              {loadingCustomers ? (
-                <div style={{ padding:20 }}>
-                  {[1,2,3].map(i => (
-                    <div key={i} style={{ height:60, borderRadius:8, marginBottom:8, background:'linear-gradient(90deg,#161b22 25%,#1e2530 50%,#161b22 75%)', backgroundSize:'200% 100%', animation:'shimmer 1.4s infinite' }} />
-                  ))}
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="ag-empty">
-                  <div className="ag-empty-icon">👤</div>
-                  <div>{searchTerm ? 'No customers match your search.' : 'No customers yet. Add your first one.'}</div>
-                </div>
-              ) : filtered.map(c => (
-                <div
-                  key={c.id}
-                  className={`ag-customer-item ${selectedCustomer?.id === c.id ? 'active' : ''}`}
-                  onClick={() => handleSelectCustomer(c)}
-                >
+              {loadingCustomers ? <div style={{ padding:20, color:'#4a5568', fontSize:12 }}>Loading assignments...</div> :
+                filtered.map(c => (
+                <div key={c.id} className={`ag-customer-item ${selectedCustomer?.id === c.id ? 'active' : ''}`} onClick={() => handleSelectCustomer(c)}>
                   <div>
                     <div className="ag-customer-name">{c.name}</div>
                     <div className="ag-customer-acc">ACC: {c.accountNumber}</div>
@@ -649,64 +540,76 @@ function AgentDashboard({ user, handleLogout }) {
             </div>
           </div>
 
-          {/* Right panel */}
+          {/* RIGHT SIDEBAR: TRANSACTION ENGINE */}
           <div className="ag-right">
             {selectedCustomer ? (
               <>
-                <div className="ag-detail-name">{selectedCustomer.name}</div>
-                {selectedCustomer.phoneNumber && (
-                  <div className="ag-detail-phone">📞 {selectedCustomer.phoneNumber}</div>
-                )}
-
-                {status.message && (
-                  <div className={status.type === 'success' ? 'ag-status-ok' : 'ag-status-err'}>
-                    {status.message}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+                  <div>
+                    <div className="ag-detail-name">{selectedCustomer.name}</div>
+                    <div className="ag-detail-phone">{selectedCustomer.phoneNumber ? `📞 ${selectedCustomer.phoneNumber}` : 'No phone linked'}</div>
                   </div>
-                )}
+                  {activeLoan && (
+                    <div style={{ textAlign:'right' }}>
+                      <div className="ag-loan-badge">ACTIVE LOAN</div>
+                      <div style={{ fontSize:11, color:'#718096', marginTop:4 }}>Owes: ₹{activeLoan.totalAmountDue - activeLoan.amountPaid}</div>
+                    </div>
+                  )}
+                </div>
+
+                {status.message && status.type === 'success' && <div className="ag-status-ok">{status.message}</div>}
+                {status.message && status.type === 'error' && <div className="ag-status-err">{status.message}</div>}
 
                 <div className="ag-deposit-box">
-                  <div className="ag-deposit-title">RECORD COLLECTION</div>
-                  <input
-                    className="ag-amount-input"
-                    type="number"
-                    placeholder="₹ Enter amount"
-                    value={depositAmount}
-                    onChange={e => setDepositAmount(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleDeposit()}
-                  />
+                  <div className="ag-deposit-title">RECORD TRANSACTION</div>
+
+                  <div className="tx-toggle-container">
+                    <div className={`tx-toggle-btn ${txType === 'SAVINGS' ? 'active savings' : ''}`} onClick={() => { setTxType('SAVINGS'); setDepositAmount(''); }}>
+                      SAVINGS
+                    </div>
+                    <div className={`tx-toggle-btn ${txType === 'EMI' ? 'active emi' : ''}`}
+                          onClick={() => {
+                            if (!activeLoan) return alert("This customer has no active loan.");
+                            setTxType('EMI');
+                            setDepositAmount(activeLoan.dailyEmiAmount);
+                          }}>
+                      LOAN EMI
+                    </div>
+                  </div>
+
+                  <input className="ag-amount-input" type="number" placeholder="₹ Enter amount" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} disabled={isSaving} />
+
                   <div className="ag-mode-row">
                     {['CASH', 'UPI'].map(m => (
-                      <button
-                        key={m}
-                        className={`ag-mode-btn ${paymentMode === m ? 'active' : ''}`}
-                        onClick={() => setPaymentMode(m)}
-                      >
+                      <button key={m} className={`ag-mode-btn ${paymentMode === m ? 'active' : ''}`} onClick={() => setPaymentMode(m)}>
                         {m === 'CASH' ? '💵' : '📱'} {m}
                       </button>
                     ))}
                   </div>
-                  <button className="ag-confirm-btn" onClick={handleDeposit}>
-                    Confirm deposit
+                  <button className="ag-confirm-btn" onClick={handleDeposit} disabled={isSaving}>
+                    {isSaving ? 'Processing...' : txType === 'EMI' ? 'Collect EMI' : 'Confirm Deposit'}
                   </button>
                 </div>
 
                 <div className="ag-history-title">Recent history</div>
-                {transactions.length === 0 ? (
-                  <div style={{ color:'#2d3748', fontSize:12, padding:'20px 0' }}>No transactions yet.</div>
-                ) : transactions.map((t, i) => (
+                {transactions.length === 0 ? <div style={{ color:'#2d3748', fontSize:12 }}>No transactions yet.</div> :
+                  transactions.map((t, i) => (
                   <div key={i} className="ag-txn-row">
-                    <span className="ag-txn-amt">+ ₹{parseFloat(t.amount).toLocaleString('en-IN')}</span>
-                    <span className="ag-txn-mode">{t.paymentMode || 'CASH'}</span>
-                    <span className="ag-txn-date">{new Date(t.transactionDate).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}</span>
+                    <div>
+                      <div className="ag-txn-amt" style={{ color: t.transactionCategory === 'LOAN_REPAYMENT' ? '#ffa502' : '#00ff88' }}>
+                        + ₹{parseFloat(t.amount).toLocaleString('en-IN')}
+                      </div>
+                      <div style={{ fontSize:10, color:'#718096', marginTop:2 }}>{t.transactionCategory?.replace('_', ' ') || 'SAVINGS DEPOSIT'}</div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <span className="ag-txn-mode">{t.paymentMode || 'CASH'}</span>
+                      <div className="ag-txn-date" style={{ marginTop:4 }}>{new Date(t.transactionDate).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}</div>
+                    </div>
                   </div>
                 ))}
               </>
             ) : (
-              <div className="ag-empty">
-                <div className="ag-empty-icon">◈</div>
-                <div>Select a customer to record a deposit</div>
-                <div style={{ fontSize:11, color:'#2d3748' }}>or use + New to add a customer</div>
-              </div>
+              <div className="ag-empty"><div className="ag-empty-icon">◈</div><div>Select a customer to record a transaction</div></div>
             )}
           </div>
         </div>
@@ -716,19 +619,25 @@ function AgentDashboard({ user, handleLogout }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 4. PROTECTED ROUTE WRAPPER
+// 4. PROTECTED ROUTE WRAPPER (4-TIER UPDATED)
 // ═══════════════════════════════════════════════════════════════════════════════
 function ProtectedRoute({ user, allowedRoles, children }) {
   if (!user) return <Navigate to="/login" replace />;
-  if (!allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
+
+  // Strict role check enforcement
+  if (!allowedRoles.includes(user.role)) {
+    if (user.role === 'SYSTEM_ADMIN') return <Navigate to="/superadmin" replace />;
+    if (user.role === 'AGENT') return <Navigate to="/agent" replace />;
+    return <Navigate to="/admin" replace />;
+  }
+
   return children;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 5. APP ROUTER
+// 5. APP ROUTER (4-TIER UPDATED)
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  // Persist user in sessionStorage so refresh doesn't log them out
   const [user, setUser] = useState(() => {
     try {
       const saved = sessionStorage.getItem('pigmypay_user');
@@ -750,29 +659,39 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Public */}
-        <Route path="/"       element={<LandingPage />} />
-        <Route path="/login"  element={
+        <Route path="/" element={<LandingPage />} />
+
+        {/* SMART LOGIN REDIRECT */}
+        <Route path="/login" element={
           user
-            ? <Navigate to={user.role === 'AGENT' ? '/agent' : '/admin'} replace />
+            ? <Navigate to={
+                user.role === 'SYSTEM_ADMIN' ? '/superadmin' :
+                user.role === 'AGENT' ? '/agent' : '/admin'
+              } replace />
             : <LoginPage setUser={handleSetUser} />
         } />
 
-        {/* Admin / Manager portal */}
+        {/* TIER 1: SYSTEM ADMIN */}
+        <Route path="/superadmin" element={
+          <ProtectedRoute user={user} allowedRoles={['SYSTEM_ADMIN']}>
+            <SuperAdminDashboard user={user} handleLogout={handleLogout} />
+          </ProtectedRoute>
+        } />
+
+        {/* TIER 2 & 3: ADMIN & MANAGER */}
         <Route path="/admin" element={
           <ProtectedRoute user={user} allowedRoles={['ADMIN','MANAGER']}>
             <AdminDashboard user={user} handleLogout={handleLogout} />
           </ProtectedRoute>
         } />
 
-        {/* Agent portal — admins can also preview it */}
+        {/* TIER 4: AGENT */}
         <Route path="/agent" element={
           <ProtectedRoute user={user} allowedRoles={['AGENT','ADMIN','MANAGER']}>
             <AgentDashboard user={user} handleLogout={handleLogout} />
           </ProtectedRoute>
         } />
 
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

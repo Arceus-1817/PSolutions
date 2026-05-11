@@ -41,6 +41,25 @@ public class User implements UserDetails {
     @JoinColumn(name = "branch_id")
     private Branch branch;
 
+    @Column(unique = true)
+    private String agentEmployeeId; // e.g., "PGMY-1001"
+
+    @Column(updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    private java.time.LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = java.time.LocalDateTime.now();
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
     // ==============================================================
     // Spring Security UserDetails Methods
     // ==============================================================
