@@ -32,13 +32,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // NEW: Always allow the browser's invisible "Preflight" requests!
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-//                                .requestMatchers("/api/customers/**").authenticated()
-//                                .requestMatchers("/api/transactions/**").authenticated()
-                                .requestMatchers("/api/users/**","/api/superadmin/**","/api/routes/**", "/api/branches/**", "/api/customers/**", "/api/transactions/**", "/api/stats/**", "/api/settlements/**", "/api/tenants/**").authenticated()
-// Or whatever role-based logic you are using for the other working endpoints
+                        // ALLOW /error SO WE CAN SEE REAL CRASHES INSTEAD OF 403s
+                        .requestMatchers("/api/auth/**", "/error").permitAll()
+                        // ADDED /api/loans/** SO THE ADMIN DASHBOARD CAN FETCH LOANS
+                        .requestMatchers("/api/users/**", "/api/superadmin/**", "/api/routes/**",
+                                "/api/branches/**", "/api/customers/**", "/api/transactions/**",
+                                "/api/stats/**", "/api/settlements/**", "/api/tenants/**", "/api/loans/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -51,14 +51,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // NEW: Instead of just 5173, this allows ANY local port (5173, 5174, etc.)
         configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
-
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true); // Required for strict browsers
-
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

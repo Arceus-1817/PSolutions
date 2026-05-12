@@ -149,4 +149,24 @@ public class CustomerController {
             return ResponseEntity.badRequest().body("Failed to update sequence: " + e.getMessage());
         }
     }
+
+    // ── UPDATE KYC DETAILS ──
+    @PutMapping("/{customerId}/kyc")
+    public ResponseEntity<?> updateKyc(@PathVariable Long customerId, @RequestBody Customer kycData) {
+        try {
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+            customer.setAadharNumber(kycData.getAadharNumber());
+            customer.setPanNumber(kycData.getPanNumber());
+            customer.setResidentialAddress(kycData.getResidentialAddress());
+            customer.setGuarantorName(kycData.getGuarantorName());
+            customer.setGuarantorPhoneNumber(kycData.getGuarantorPhoneNumber());
+            customer.setKycStatus("VERIFIED");
+
+            return ResponseEntity.ok(customerRepository.save(customer));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("KYC failed: " + e.getMessage());
+        }
+    }
 }

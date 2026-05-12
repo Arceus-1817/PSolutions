@@ -32,4 +32,9 @@ public class AgentShift {
 
     // e.g., "ACTIVE", "COMPLETED", "CANCELLED"
     private String status = "ACTIVE";
+
+    // The Company this shift belongs to (Crucial for the Security Wall)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 }

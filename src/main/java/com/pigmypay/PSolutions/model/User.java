@@ -49,6 +49,11 @@ public class User implements UserDetails {
 
     private java.time.LocalDateTime updatedAt;
 
+    // FRAUD PREVENTION: The maximum amount of physical cash an agent can hold
+    // before they are forced to return to the branch and settle.
+    @Column(nullable = false)
+    private java.math.BigDecimal maxCashHoldingLimit = new java.math.BigDecimal("50000.00");
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = java.time.LocalDateTime.now();

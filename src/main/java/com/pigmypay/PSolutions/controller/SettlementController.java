@@ -1,77 +1,73 @@
 package com.pigmypay.PSolutions.controller;
 
 import com.pigmypay.PSolutions.model.Transaction;
+import com.pigmypay.PSolutions.model.User;
 import com.pigmypay.PSolutions.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin
 @RequestMapping("/api/settlements")
 public class SettlementController {
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    @Autowired private TransactionRepository transactionRepository;
 
-    // 1. View all cash currently in Agent pockets (UNSETTLED)
     @GetMapping("/pending/{tenantId}")
-    public ResponseEntity<?> getPendingSettlements(@PathVariable Long tenantId) {
+    public ResponseEntity<?> getPendingSettlementsForTenant(@PathVariable Long tenantId) {
         try {
-            // Find all transactions that haven't been handed to the manager yet
-            List<Transaction> unsettledTxns = transactionRepository.findAll().stream()
+            List<Transaction> allUnsettled = transactionRepository.findAll().stream()
                     .filter(t -> "UNSETTLED".equals(t.getSettlementStatus()))
-                    // Assuming you have a way to filter by tenant. If not, just filter by UNSETTLED for now.
-                    .collect(Collectors.toList());
+                    .filter(t -> t.getAgent() != null && t.getAgent().getTenant() != null && t.getAgent().getTenant().getId().equals(tenantId))
+                    .toList();
 
-            // Group the transactions by the Agent's Name and calculate the total cash they hold
-            Map<String, Map<String, Object>> agentTotals = unsettledTxns.stream()
-                    .filter(t -> t.getAgent() != null)
-                    .collect(Collectors.groupingBy(
-                            t -> t.getAgent().getName() + "|" + t.getAgent().getId(), // Group by Agent
-                            Collectors.collectingAndThen(Collectors.toList(), list -> {
-                                BigDecimal totalCash = list.stream()
-                                        .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                                return Map.of(
-                                        "totalCash", totalCash,
-                                        "transactionCount", list.size(),
-                                        "transactions", list // Keep the raw list in case the manager wants to see it
-                                );
-                            })
-                    ));
+            Map<String, Map<String, Object>> response = new HashMap<>();
 
-            return ResponseEntity.ok(agentTotals);
+            for (Transaction t : allUnsettled) {
+                User agent = t.getAgent();
+                String key = agent.getName() + "|" + agent.getId();
+
+                response.putIfAbsent(key, new HashMap<>(Map.of(
+                        "totalCash", BigDecimal.ZERO,
+                        "transactionCount", 0
+                )));
+
+                Map<String, Object> agentData = response.get(key);
+                BigDecimal currentTotal = (BigDecimal) agentData.get("totalCash");
+                int currentCount = (int) agentData.get("transactionCount");
+
+                agentData.put("totalCash", currentTotal.add(t.getAmount()));
+                agentData.put("transactionCount", currentCount + 1);
+            }
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to load settlements: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // 2. The Manager confirms they received the physical cash
     @PostMapping("/confirm/{agentId}")
-    public ResponseEntity<?> confirmCashHandover(@PathVariable Long agentId) {
+    public ResponseEntity<?> confirmSettlement(@PathVariable Long agentId) {
         try {
-            // Find all unsettled money for this specific agent
-            List<Transaction> agentTxns = transactionRepository.findAll().stream()
-                    .filter(t -> "UNSETTLED".equals(t.getSettlementStatus()) && t.getAgent() != null && t.getAgent().getId().equals(agentId))
-                    .collect(Collectors.toList());
+            List<Transaction> unsettled = transactionRepository.findAll().stream()
+                    .filter(t -> "UNSETTLED".equals(t.getSettlementStatus()))
+                    .filter(t -> t.getAgent() != null && t.getAgent().getId().equals(agentId))
+                    .toList();
 
-            if (agentTxns.isEmpty()) {
-                return ResponseEntity.badRequest().body("No pending cash to settle for this agent.");
+            for (Transaction t : unsettled) {
+                t.setSettlementStatus("SETTLED");
             }
+            transactionRepository.saveAll(unsettled);
 
-            // Mark them all as safely in the bank/branch safe
-            agentTxns.forEach(t -> t.setSettlementStatus("SETTLED"));
-            transactionRepository.saveAll(agentTxns);
-
-            return ResponseEntity.ok("Cash settlement confirmed successfully. Safe updated.");
+            return ResponseEntity.ok("Successfully settled " + unsettled.size() + " transactions.");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Settlement failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

@@ -473,6 +473,7 @@ export default function AdminDashboard({ user, handleLogout }) {
   const [pendingCash, setPendingCash] = useState({});
   // Route & Logistics State
     const [routes, setRoutes] = useState([]);
+    const [pendingLoans, setPendingLoans] = useState([]);
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [routeCustomers, setRouteCustomers] = useState([]);
     const [draggedIdx, setDraggedIdx] = useState(null);
@@ -506,78 +507,84 @@ export default function AdminDashboard({ user, handleLogout }) {
   }, []);
 
   // ─── THE BLAST SHIELD REWRITE ───
-  const fetchAll = async () => {
-    setLoading(true);
-    const ts = Date.now();
+    const fetchAll = async () => {
+      setLoading(true);
+      const ts = Date.now();
 
-    // Helper to safely unwrap objects if Java returns { data: [...] } instead of pure arrays
-    const extractArray = (res) => {
-      if (!res || !res.data) return [];
-      if (Array.isArray(res.data)) return res.data;
-      if (Array.isArray(res.data.data)) return res.data.data;
-      if (Array.isArray(res.data.users)) return res.data.users;
-      if (Array.isArray(res.data.content)) return res.data.content;
-      return [];
-    };
+      // Helper to safely unwrap objects if Java returns { data: [...] } instead of pure arrays
+      const extractArray = (res) => {
+        if (!res || !res.data) return [];
+        if (Array.isArray(res.data)) return res.data;
+        if (Array.isArray(res.data.data)) return res.data.data;
+        if (Array.isArray(res.data.users)) return res.data.users;
+        if (Array.isArray(res.data.content)) return res.data.content;
+        return [];
+      };
 
-    try {
+      try {
         const settleRes = await axios.get(`http://localhost:8085/api/settlements/pending/${tenantId}?t=${ts}`, authH);
         setPendingCash(settleRes.data || {});
       } catch(e) { console.warn("Settlement API blocked"); }
 
-    try {
-            const routesRes = await axios.get(`http://localhost:8085/api/routes?t=${ts}`, authH);
-            setRoutes(extractArray(routesRes));
-          } catch (e) { console.warn("Routes API missing"); }
-
-    try {
-      // 1. Core Data
-      const [agentsRes, branchesRes] = await Promise.all([
-        axios.get(`http://localhost:8085/api/users/tenant/${tenantId}?t=${ts}`, authH),
-        axios.get(`http://localhost:8085/api/branches/tenant/${tenantId}?t=${ts}`, authH),
-      ]);
-
-      const agentList = extractArray(agentsRes);
-      const branchList = extractArray(branchesRes);
-      setAgents(agentList);
-      setBranches(branchList);
-
-      // 2. Customers Data
-      let customerList = [];
       try {
-        const custRes = await axios.get(`http://localhost:8085/api/customers/tenant/${tenantId}?t=${ts}`, authH);
-        customerList = extractArray(custRes);
-        setCustomers(customerList);
-      } catch (e) { console.warn("Customer API missing/blocked."); }
+        const routesRes = await axios.get(`http://localhost:8085/api/routes?t=${ts}`, authH);
+        setRoutes(extractArray(routesRes));
+      } catch (e) { console.warn("Routes API missing"); }
 
-      // 3. Transaction/Activity Data
+      // ✅ THE NEW PENDING LOANS FETCH BLOCK IS SAFELY ADDED HERE
       try {
-        const txRes = await axios.get(`http://localhost:8085/api/transactions/recent/${tenantId}?t=${ts}`, authH);
-        setActivity(extractArray(txRes));
-      } catch (e) { console.warn("Transaction API missing/blocked."); }
+        const loansRes = await axios.get(`http://localhost:8085/api/loans/pending?t=${ts}`, authH);
+        setPendingLoans(extractArray(loansRes));
+      } catch(e) { console.warn("Pending Loans API blocked/missing"); }
 
-      // 4. Stats Data
       try {
-        const statsRes = await axios.get(`http://localhost:8085/api/stats/tenant/${tenantId}?t=${ts}`, authH);
-        setStats(statsRes.data);
+        // 1. Core Data
+        const [agentsRes, branchesRes] = await Promise.all([
+          axios.get(`http://localhost:8085/api/users/tenant/${tenantId}?t=${ts}`, authH),
+          axios.get(`http://localhost:8085/api/branches/tenant/${tenantId}?t=${ts}`, authH),
+        ]);
+
+        const agentList = extractArray(agentsRes);
+        const branchList = extractArray(branchesRes);
+        setAgents(agentList);
+        setBranches(branchList);
+
+        // 2. Customers Data
+        let customerList = [];
+        try {
+          const custRes = await axios.get(`http://localhost:8085/api/customers/tenant/${tenantId}?t=${ts}`, authH);
+          customerList = extractArray(custRes);
+          setCustomers(customerList);
+        } catch (e) { console.warn("Customer API missing/blocked."); }
+
+        // 3. Transaction/Activity Data
+        try {
+          const txRes = await axios.get(`http://localhost:8085/api/transactions/recent/${tenantId}?t=${ts}`, authH);
+          setActivity(extractArray(txRes));
+        } catch (e) { console.warn("Transaction API missing/blocked."); }
+
+        // 4. Stats Data
+        try {
+          const statsRes = await axios.get(`http://localhost:8085/api/stats/tenant/${tenantId}?t=${ts}`, authH);
+          setStats(statsRes.data);
+        } catch (e) {
+          console.warn("Stats API missing/blocked. Using UI fallbacks.");
+          setStats({
+            agentCount: agentList.filter(a => a.role === 'AGENT').length,
+            managerCount: agentList.filter(a => a.role === 'MANAGER').length,
+            branchCount: branchList.length,
+            customerCount: customerList.length,
+            todayCollection: 0,
+            totalPortfolio: 0,
+          });
+        }
+
       } catch (e) {
-        console.warn("Stats API missing/blocked. Using UI fallbacks.");
-        setStats({
-          agentCount: agentList.filter(a => a.role === 'AGENT').length,
-          managerCount: agentList.filter(a => a.role === 'MANAGER').length,
-          branchCount: branchList.length,
-          customerCount: customerList.length,
-          todayCollection: 0,
-          totalPortfolio: 0,
-        });
+        console.error("Critical API Failure: Core data could not load.", e);
+      } finally {
+        setLoading(false);
       }
-
-    } catch (e) {
-      console.error("Critical API Failure: Core data could not load.", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -621,6 +628,7 @@ export default function AdminDashboard({ user, handleLogout }) {
       { id:'agents',     label:'Users',      icon:'◉', roles: ['ADMIN', 'MANAGER'] },
 
       // 🔒 RESTRICTED TABS: Only Company Admins can see these
+      { id:'approvals',  label:'Approvals',  icon:'📝', roles: ['ADMIN'] }, // <-- ADDED THIS!
       { id:'branches',   label:'Branches',   icon:'◧', roles: ['ADMIN'] },
       { id:'analytics',  label:'Analytics',  icon:'◫', roles: ['ADMIN'] },
     ].filter(t => t.roles.includes(user?.role)); // <-- This filter is the magic security key
@@ -700,6 +708,80 @@ export default function AdminDashboard({ user, handleLogout }) {
                 </p>
               </div>
 
+
+              {/* ════ MAKER-CHECKER APPROVALS ════════════════════════════════════════ */}
+                        {tab === 'approvals' && (
+                          <div>
+                            <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                              <div>
+                                <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Maker-Checker Authorization</h1>
+                                <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Review and authorize loan disbursements requested by Branch Managers.</p>
+                              </div>
+                            </div>
+
+                            <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px,1fr))', gap:16 }}>
+                              {pendingLoans.length === 0 ? (
+                                <div style={{ gridColumn:'1/-1', padding:60, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:13 }}>
+                                  No pending loan requests. You are all caught up!
+                                </div>
+                              ) : pendingLoans.map((loan) => (
+                                <div key={loan.id} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden' }}>
+                                  <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${G.info},${G.info}44)` }}/>
+
+                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                                    <div>
+                                      <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:G.text }}>{loan.customer?.name || 'Unknown Customer'}</div>
+                                      <div style={{ fontSize:11, color:G.textSub }}>Requested by Branch Manager</div>
+                                    </div>
+                                    <span className="tag tag-amber">PENDING</span>
+                                  </div>
+
+                                  <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, padding:16, marginBottom:16 }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                                      <span style={{ fontSize:12, color:G.textSub }}>Principal Amount</span>
+                                      <span style={{ fontSize:14, fontWeight:700, color:G.text }}>{fmtR(loan.principalAmount)}</span>
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                                      <span style={{ fontSize:12, color:G.textSub }}>Interest Rate</span>
+                                      <span style={{ fontSize:12, color:G.text }}>{loan.interestRate}%</span>
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                                      <span style={{ fontSize:12, color:G.textSub }}>Processing Fee</span>
+                                      <span style={{ fontSize:12, color:G.text }}>{fmtR(loan.processingFeeAmount || 0)}</span>
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                                      <span style={{ fontSize:12, color:G.textSub }}>Daily EMI</span>
+                                      <span style={{ fontSize:12, color:G.accent }}>{fmtR(loan.dailyEmiAmount)} / day</span>
+                                    </div>
+                                    <div style={{ display:'flex', justifyContent:'space-between', paddingTop:8, borderTop:`1px solid ${G.border}` }}>
+                                      <span style={{ fontSize:12, color:G.textSub }}>Total Repayment Due</span>
+                                      <span style={{ fontSize:12, color:G.warn, fontWeight:600 }}>{fmtR(loan.totalAmountDue)}</span>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    className="btn-primary"
+                                    style={{ width:'100%', background:G.info, color:'#fff' }}
+                                    onClick={async () => {
+                                      if(window.confirm(`Are you sure you want to disburse ${fmtR(loan.principalAmount)} to ${loan.customer?.name}?`)) {
+                                        try {
+                                          await axios.put(`http://localhost:8085/api/loans/approve/${loan.id}`, {}, authH);
+                                          alert("✅ Loan Approved! The EMI clock begins tomorrow.");
+                                          fetchAll(); // Refresh the board
+                                        } catch(e) {
+                                          alert("Error approving loan: " + (e.response?.data || e.message));
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    ✓ Authorize & Disburse
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
               {/* ════ SETTLEMENTS (CASH HANDOVER) ════════════════════════════════ */}
                         {tab === 'settlements' && (
                           <div>
@@ -763,51 +845,143 @@ export default function AdminDashboard({ user, handleLogout }) {
 
 
                     {/* ════ LOGISTICS & ROUTES ════════════════════════════════════════ */}
-                              {tab === 'logistics' && (
-                                <div>
-                                  <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                                    <div>
-                                      <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Route Management</h1>
-                                      <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Group customers geographically to optimize field collections.</p>
-                                    </div>
-                                    <button className="btn-primary" onClick={() => {
-                                      const name = window.prompt("Enter new route name (e.g., Station Road):");
-                                      if (name) axios.post('http://localhost:8085/api/routes', { name }, authH).then(fetchAll);
-                                    }}>+ Create Route</button>
-                                  </div>
+                             {/* ════ LOGISTICS & ROUTES ════════════════════════════════════════ */}
+                                       {tab === 'logistics' && (
+                                         <div>
+                                           <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                                             <div>
+                                               <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Route Management</h1>
+                                               <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Group customers geographically and assign field agents.</p>
+                                             </div>
+                                             <button className="btn-primary" onClick={async () => {
+                                               const name = window.prompt("Enter new route name (e.g., Station Road):");
+                                               if (name) {
+                                                 try {
+                                                   await axios.post('http://localhost:8085/api/routes/create', { routeName: name }, authH);
+                                                   fetchAll();
+                                                 } catch (e) { alert("Failed to create route"); }
+                                               }
+                                             }}>+ Create Route</button>
+                                           </div>
 
-                                  <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                                    {/* Available Routes Panel */}
-                                    <div style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:20 }}>
-                                      <h3 style={{ fontSize:14, marginBottom:16, color:G.text }}>Active Routes</h3>
-                                      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                                        {/* Placeholder for Routes - Once you fetch routes, map them here! */}
-                                        <div style={{ padding:16, background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, display:'flex', justifyContent:'space-between' }}>
-                                          <div>
-                                            <div style={{ fontWeight:600, color:G.accent }}>Example: Shivaji Market Route</div>
-                                            <div style={{ fontSize:11, color:G.textSub, marginTop:4 }}>0 customers assigned</div>
-                                          </div>
-                                          <button className="btn-ghost" style={{ fontSize:11, padding:'4px 10px' }}>Manage</button>
-                                        </div>
-                                      </div>
-                                    </div>
+                                           <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:20 }}>
 
-                                    {/* Unassigned Customers Panel */}
-                                    <div style={{ background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, padding:20 }}>
-                                      <h3 style={{ fontSize:14, marginBottom:16, color:G.warn }}>Unassigned Customers</h3>
-                                      <p style={{ fontSize:12, color:G.textSub, marginBottom:16 }}>These customers are not on any walking route yet.</p>
-                                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                                        {customers.filter(c => !c.route).slice(0, 5).map(c => (
-                                          <div key={c.id} style={{ padding:12, background:G.surface, borderRadius:6, fontSize:12, display:'flex', justifyContent:'space-between' }}>
-                                            <span>{c.name} (ACC: {c.accountNumber})</span>
-                                            <span style={{ color:G.muted }}>Need assignment</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
+                                             {/* LEFT: ROUTE LIST */}
+                                             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                                               <h3 style={{ fontSize:14, color:G.text }}>Active Routes</h3>
+                                               {routes.length === 0 ? (
+                                                 <div style={{ padding:30, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:12 }}>
+                                                   No routes created yet.
+                                                 </div>
+                                               ) : routes.map(r => {
+                                                 const routeCusts = customers.filter(c => c.route?.id === r.id);
+                                                 const isSelected = selectedRoute?.id === r.id;
+                                                 return (
+                                                   <div key={r.id} onClick={() => setSelectedRoute(r)} style={{
+                                                     padding:16, background:isSelected ? `${G.accent}15` : G.surface,
+                                                     border:`1px solid ${isSelected ? G.accent : G.border}`,
+                                                     borderRadius:G.rLg, cursor:'pointer', transition:'all .2s'
+                                                   }}>
+                                                     <div style={{ fontWeight:700, color:isSelected ? G.accent : G.text, fontFamily:'var(--font-display)', fontSize:16 }}>
+                                                       {r.routeName || r.name}
+                                                     </div>
+                                                     <div style={{ fontSize:11, color:G.textSub, marginTop:6 }}>
+                                                       {routeCusts.length} customers assigned
+                                                     </div>
+                                                   </div>
+                                                 )
+                                               })}
+                                             </div>
+
+                                             {/* RIGHT: ROUTE DETAILS & ASSIGNMENT */}
+                                             <div style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:24, display:'flex', flexDirection:'column' }}>
+                                               {!selectedRoute ? (
+                                                 <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:G.muted, fontSize:13 }}>
+                                                   <div style={{ fontSize:32, marginBottom:10 }}>🗺️</div>
+                                                   Select a route from the left to manage it.
+                                                 </div>
+                                               ) : (
+                                                 <div className="fade-up">
+                                                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, paddingBottom:16, borderBottom:`1px solid ${G.border}` }}>
+                                                     <div>
+                                                       <h2 style={{ fontFamily:'var(--font-display)', fontSize:20, fontWeight:700, color:G.accent }}>{selectedRoute.routeName || selectedRoute.name}</h2>
+                                                       <div style={{ fontSize:12, color:G.textSub, marginTop:4 }}>Assign customers and dispatch an agent.</div>
+                                                     </div>
+
+                                                     {/* DISPATCH AGENT BTN */}
+                                                     <button className="btn-warn" onClick={async () => {
+                                                       const agentId = window.prompt(`Enter Agent ID to walk this route today:\n(Available Agents: ${agents.filter(a=>a.role==='AGENT').map(a => `${a.id}-${a.name}`).join(', ')})`);
+                                                       if(agentId) {
+                                                         try {
+                                                           await axios.post('http://localhost:8085/api/routes/assign-shift', { routeId: selectedRoute.id, agentId: parseInt(agentId) }, authH);
+                                                           alert("Shift successfully assigned! Agent will see this route on their app.");
+                                                         } catch(e) { alert("Failed to assign shift."); }
+                                                       }
+                                                     }}>
+                                                       🚶 Dispatch Agent
+                                                     </button>
+                                                   </div>
+
+                                                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                                                     {/* CURRENTLY ON ROUTE */}
+                                                     <div>
+                                                       <h4 style={{ fontSize:11, color:G.textSub, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Sequence / Assigned</h4>
+                                                       <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                                                         {customers.filter(c => c.route?.id === selectedRoute.id)
+                                                           .sort((a,b) => (a.routeSequence||0) - (b.routeSequence||0))
+                                                           .map(c => (
+                                                             <div key={c.id} style={{ padding:'10px 14px', background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, display:'flex', alignItems:'center', gap:12 }}>
+                                                               <div style={{ width:24, height:24, borderRadius:6, background:G.bg, color:G.muted, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700 }}>
+                                                                 {c.routeSequence || 0}
+                                                               </div>
+                                                               <div style={{ flex:1 }}>
+                                                                 <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
+                                                                 <div style={{ fontSize:10, color:G.textSub }}>ACC: {c.accountNumber}</div>
+                                                               </div>
+                                                             </div>
+                                                         ))}
+                                                         {customers.filter(c => c.route?.id === selectedRoute.id).length === 0 && (
+                                                           <div style={{ fontSize:12, color:G.muted, fontStyle:'italic' }}>No customers assigned yet.</div>
+                                                         )}
+                                                       </div>
+                                                     </div>
+
+                                                     {/* UNASSIGNED CUSTOMERS */}
+                                                     <div>
+                                                       <h4 style={{ fontSize:11, color:G.warn, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Unassigned Pool</h4>
+                                                       <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'400px', overflowY:'auto', paddingRight:4 }}>
+                                                         {customers.filter(c => !c.route).map(c => (
+                                                           <div key={c.id} style={{ padding:'10px 14px', background:G.bg, border:`1px dashed ${G.borderHi}`, borderRadius:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                                             <div>
+                                                               <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
+                                                               <div style={{ fontSize:10, color:G.textSub }}>{c.accountNumber}</div>
+                                                             </div>
+                                                             <button className="btn-ghost" style={{ padding:'4px 8px', fontSize:10, color:G.accent }} onClick={async () => {
+                                                               const seq = window.prompt(`Enter sequence number for ${c.name} on this route:`, "1");
+                                                               if(seq) {
+                                                                 try {
+                                                                   await axios.post('http://localhost:8085/api/routes/assign-customer', {
+                                                                     customerId: c.id, routeId: selectedRoute.id, routeSequence: parseInt(seq)
+                                                                   }, authH);
+                                                                   fetchAll();
+                                                                 } catch(e) { alert("Failed to assign"); }
+                                                               }
+                                                             }}>+ Add</button>
+                                                           </div>
+                                                         ))}
+                                                         {customers.filter(c => !c.route).length === 0 && (
+                                                           <div style={{ fontSize:12, color:G.accent, fontStyle:'italic' }}>All customers have a route!</div>
+                                                         )}
+                                                       </div>
+                                                     </div>
+                                                   </div>
+
+                                                 </div>
+                                               )}
+                                             </div>
+                                           </div>
+                                         </div>
+                                       )}
 
               {/* Stat cards */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(210px, 1fr))', gap:16, marginBottom:28 }}>

@@ -12,10 +12,9 @@ export default function SuperAdminDashboard({ user, handleLogout }) {
   const [plan, setPlan] = useState('STARTER');
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
-  const [adminPhoneNumber, setAdminPhoneNumber] = useState(''); // <-- ADD THIS
+  const [adminPhoneNumber, setAdminPhoneNumber] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-console.log(user);
-  // 👇 FIXED: Only one authH declaration, using the robust token check 👇
+
   const validToken = user.token || user.jwt || user.accessToken;
   const authH = { headers: { Authorization: "Bearer " + validToken } };
 
@@ -40,13 +39,31 @@ console.log(user);
 
       alert("Company successfully onboarded!");
       setShowModal(false);
-      setCompanyName(''); setAdminName(''); setAdminEmail(''); setAdminPassword('');
+      setCompanyName(''); setAdminName(''); setAdminEmail(''); setAdminPassword(''); setAdminPhoneNumber('');
       fetchClients();
     } catch (e) {
       alert(e.response?.data || "Failed to onboard client.");
     }
     setLoading(false);
   };
+
+  // 1. FILTER: Remove the System Admin's own HQ Tenant from the client list
+  const activeClients = clients.filter(c =>
+    c.id !== user.tenantId &&
+    c.companyName !== "PigmyPay System HQ"
+  );
+
+  // 2. CALCULATE REVENUE: Calculate actual MRR based on active client plans
+  const calculateMRR = () => {
+    return activeClients.reduce((total, client) => {
+      if (client.plan === 'STARTER') return total + 999;
+      if (client.plan === 'GROWTH') return total + 2499;
+      if (client.plan === 'ENTERPRISE') return total + 4999; // Base Enterprise price
+      return total;
+    }, 0);
+  };
+
+  const currentMRR = calculateMRR();
 
   return (
     <div style={{ background: G.bg, color: G.text, minHeight: '100vh', fontFamily: 'sans-serif' }}>
@@ -81,11 +98,11 @@ console.log(user);
         <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 40 }}>
           <div style={{ background: G.card, border: `1px solid ${G.border}`, padding: 24, borderRadius: G.rLg }}>
             <div style={{ fontSize: 11, color: G.textSub, textTransform: 'uppercase', marginBottom: 8 }}>Active Companies</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: G.accent }}>{clients.length}</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: G.accent }}>{activeClients.length}</div>
           </div>
           <div style={{ background: G.card, border: `1px solid ${G.border}`, padding: 24, borderRadius: G.rLg }}>
             <div style={{ fontSize: 11, color: G.textSub, textTransform: 'uppercase', marginBottom: 8 }}>Monthly Recurring Rev</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: G.text }}>₹0 <span style={{ fontSize: 14, color: G.textSub, fontWeight: 400 }}>/mo</span></div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: G.text }}>₹{currentMRR.toLocaleString('en-IN')} <span style={{ fontSize: 14, color: G.textSub, fontWeight: 400 }}>/mo</span></div>
           </div>
           <div style={{ background: G.card, border: `1px solid ${G.border}`, padding: 24, borderRadius: G.rLg }}>
             <div style={{ fontSize: 11, color: G.textSub, textTransform: 'uppercase', marginBottom: 8 }}>System Health</div>
@@ -105,17 +122,21 @@ console.log(user);
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {clients.map((c, i) => (
-              <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: 16, padding: '16px 24px', borderBottom: i === clients.length - 1 ? 'none' : `1px solid ${G.border}`, alignItems: 'center' }}>
-                <div style={{ fontSize: 13, color: G.muted }}>#{c.id}</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: G.text }}>{c.companyName}</div>
-                  <div style={{ fontSize: 11, color: G.textSub, marginTop: 4 }}>Joined {new Date(c.createdAt).toLocaleDateString()}</div>
+            {activeClients.length === 0 ? (
+               <div style={{ padding: 40, textAlign: 'center', color: G.muted, fontSize: 13 }}>No external clients onboarded yet.</div>
+            ) : (
+              activeClients.map((c, i) => (
+                <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: 16, padding: '16px 24px', borderBottom: i === activeClients.length - 1 ? 'none' : `1px solid ${G.border}`, alignItems: 'center' }}>
+                  <div style={{ fontSize: 13, color: G.muted }}>#{c.id}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: G.text }}>{c.companyName}</div>
+                    <div style={{ fontSize: 11, color: G.textSub, marginTop: 4 }}>Joined {new Date(c.createdAt || Date.now()).toLocaleDateString('en-IN')}</div>
+                  </div>
+                  <div><span style={{ background: `${G.info}15`, color: G.info, padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600 }}>{c.plan || 'STARTER'}</span></div>
+                  <div><span style={{ color: G.accent, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: G.accent }}/> ACTIVE</span></div>
                 </div>
-                <div><span style={{ background: `${G.info}15`, color: G.info, padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600 }}>{c.plan || 'STARTER'}</span></div>
-                <div><span style={{ color: G.accent, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: G.accent }}/> ACTIVE</span></div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

@@ -18,4 +18,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     // All customers in a branch (manager portal)
     List<Customer> findByAssignedAgentBranchId(Long branchId);
+
+    List<Customer> findByRouteIdOrderByRouteSequenceAsc(Long id);
 }

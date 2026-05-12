@@ -53,6 +53,20 @@ public class Loan {
 
     private java.time.LocalDateTime updatedAt;
 
+    // --- REAL CREDIT MECHANICS ---
+
+    // The fee deducted upfront before handing cash to the customer (e.g., 2% to 5%)
+    @Column(nullable = false)
+    private BigDecimal processingFeeAmount = BigDecimal.ZERO;
+
+    // Tracks partial payments. If daily EMI is ₹110 and they pay ₹50, arrears increases by ₹60.
+    @Column(nullable = false)
+    private BigDecimal arrearsBalance = BigDecimal.ZERO;
+
+    // For tracking Non-Performing Assets (NPA) under RBI guidelines
+    @Column(nullable = false)
+    private Integer consecutiveMissedDays = 0;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = java.time.LocalDateTime.now();
