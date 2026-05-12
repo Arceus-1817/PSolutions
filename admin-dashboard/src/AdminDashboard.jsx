@@ -73,7 +73,6 @@ const STYLE = `
   .tag-purple{background:rgba(139,92,246,.1);color:var(--purple);}
 `;
 
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt  = (n) => Number(n || 0).toLocaleString('en-IN');
 const fmtR = (n) => `₹${fmt(n)}`;
@@ -259,7 +258,8 @@ function EditUserModal({ agent, branches, token, onSuccess, onClose }) {
   const [error,    setError]   = useState('');
   const [success,  setSuccess] = useState('');
 
-const authH = { headers: { Authorization: "Bearer " + token } };
+  const authH = { headers: { Authorization: "Bearer " + token } };
+
   const saveDetails = async () => {
     setLoading(true); setError(''); setSuccess('');
     try {
@@ -316,7 +316,6 @@ const authH = { headers: { Authorization: "Bearer " + token } };
       <button className="btn-primary" style={{ width:'100%', marginBottom:20 }} onClick={saveDetails} disabled={loading}>
         {loading ? 'Saving…' : 'Save changes'}
       </button>
-
       <div style={{ borderTop:`1px solid ${G.border}`, paddingTop:18, marginBottom:16 }}>
         <div style={{ fontSize:11, color:G.textSub, letterSpacing:'.06em', textTransform:'uppercase', marginBottom:10 }}>Reset password</div>
         <div style={{ display:'flex', gap:10 }}>
@@ -324,10 +323,8 @@ const authH = { headers: { Authorization: "Bearer " + token } };
           <button className="btn-warn" onClick={resetPass} disabled={loading}>Reset</button>
         </div>
       </div>
-
       {error   && <div style={{ background:'rgba(255,71,87,.1)', border:'1px solid rgba(255,71,87,.25)', borderRadius:8, padding:'10px 14px', fontSize:12, color:G.danger, marginBottom:12 }}>{error}</div>}
       {success && <div style={{ background:'rgba(0,255,136,.08)', border:'1px solid rgba(0,255,136,.2)', borderRadius:8, padding:'10px 14px', fontSize:12, color:G.accent, marginBottom:12 }}>{success}</div>}
-
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:`1px solid ${G.border}`, paddingTop:16 }}>
         <button className="btn-danger" onClick={deleteUser} disabled={loading}>Delete user</button>
         <button className="btn-ghost" onClick={onClose}>Close</button>
@@ -340,18 +337,13 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
   const [tab, setTab] = useState('loans');
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // KYC
   const [aadhar, setAadhar] = useState(customer.aadharNumber || '');
   const [pan, setPan] = useState(customer.panNumber || '');
   const [address, setAddress] = useState(customer.residentialAddress || '');
   const [gName, setGName] = useState(customer.guarantorName || '');
   const [gPhone, setGPhone] = useState(customer.guarantorPhoneNumber || '');
-
-  // Loan Engine
   const [principal, setPrincipal] = useState('');
   const [interestRate, setInterestRate] = useState('10');
-
   const authH = { headers: { Authorization: `Bearer ${token}` } };
 
   const fetchLoans = async () => {
@@ -371,7 +363,7 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
       }, authH);
       alert('KYC Updated Successfully!');
       onSuccess();
-    } catch (e) { alert('KYC Update Failed (Endpoint might be missing)'); } finally { setLoading(false); }
+    } catch (e) { alert('KYC Update Failed'); } finally { setLoading(false); }
   };
 
   const issueLoan = async () => {
@@ -384,7 +376,7 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
       setPrincipal('');
       await fetchLoans();
       onSuccess();
-    } catch (e) { alert('Failed to issue loan. (Endpoint might be missing)'); } finally { setLoading(false); }
+    } catch (e) { alert('Failed to issue loan.'); } finally { setLoading(false); }
   };
 
   const pAmt = parseFloat(principal) || 0;
@@ -404,12 +396,10 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
           <div style={{ fontSize:12, color:G.textSub, marginTop:2 }}>ACC: {customer.accountNumber} · <span className={customer.kycStatus === 'VERIFIED' ? 'tag tag-green' : 'tag tag-amber'}>{customer.kycStatus || 'PENDING KYC'}</span></div>
         </div>
       </div>
-
       <div style={{ display:'flex', gap:10, marginBottom:20 }}>
         <button onClick={()=>setTab('loans')} className={tab === 'loans' ? 'btn-primary' : 'btn-ghost'} style={{flex:1}}>Loan Engine</button>
         <button onClick={()=>setTab('kyc')} className={tab === 'kyc' ? 'btn-primary' : 'btn-ghost'} style={{flex:1}}>KYC Profile</button>
       </div>
-
       {tab === 'loans' && (
         <div className="fade-up">
           <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:12, padding:16, marginBottom:20 }}>
@@ -428,7 +418,6 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
               {loading ? 'Processing...' : 'Authorize & Issue Loan'}
             </button>
           </div>
-
           <h4 style={{ fontSize:12, color:G.textSub, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Active & Past Loans</h4>
           {loans.length === 0 ? <p style={{ fontSize:13, color:G.muted }}>No loan history found.</p> : loans.map(l => (
             <div key={l.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:G.surface, padding:'12px 16px', borderRadius:8, border:`1px solid ${G.border}`, marginBottom:8 }}>
@@ -441,7 +430,6 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
           ))}
         </div>
       )}
-
       {tab === 'kyc' && (
         <div className="fade-up">
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px' }}>
@@ -463,7 +451,6 @@ function CustomerProfileModal({ customer, token, onSuccess, onClose }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard({ user, handleLogout }) {
-  // State
   const [agents, setAgents]       = useState([]);
   const [branches, setBranches]   = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -471,28 +458,19 @@ export default function AdminDashboard({ user, handleLogout }) {
   const [stats, setStats]         = useState(null);
   const [loading, setLoading]     = useState(true);
   const [pendingCash, setPendingCash] = useState({});
-  // Route & Logistics State
-    const [routes, setRoutes] = useState([]);
-    const [pendingLoans, setPendingLoans] = useState([]);
-    const [selectedRoute, setSelectedRoute] = useState(null);
-    const [routeCustomers, setRouteCustomers] = useState([]);
-    const [draggedIdx, setDraggedIdx] = useState(null);
+  const [routes, setRoutes] = useState([]);
+  const [pendingLoans, setPendingLoans] = useState([]);
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
   const [tab, setTab]             = useState('overview');
   const [clock, setClock]         = useState(new Date());
-
-  // Search & Filter State
   const [search, setSearch]             = useState('');
   const [custSearch, setCustSearch]     = useState('');
   const [roleFilter, setRoleFilter]     = useState('ALL');
-
-  // Modal State
   const [showAddAgent, setShowAddAgent]   = useState(false);
   const [showAddBranch, setShowAddBranch] = useState(false);
   const [editAgent, setEditAgent]         = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-
-  // Form State (Branch)
   const [branchName, setBranchName] = useState('');
   const [branchCity, setBranchCity] = useState('');
 
@@ -500,95 +478,85 @@ export default function AdminDashboard({ user, handleLogout }) {
   const tenantId = user?.tenantId ?? 1;
   const authH = { headers: { Authorization: `Bearer ${token}` } };
 
-  // Clock
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // ─── THE BLAST SHIELD REWRITE ───
-    const fetchAll = async () => {
-      setLoading(true);
-      const ts = Date.now();
+  const fetchAll = async () => {
+    setLoading(true);
+    const ts = Date.now();
 
-      // Helper to safely unwrap objects if Java returns { data: [...] } instead of pure arrays
-      const extractArray = (res) => {
-        if (!res || !res.data) return [];
-        if (Array.isArray(res.data)) return res.data;
-        if (Array.isArray(res.data.data)) return res.data.data;
-        if (Array.isArray(res.data.users)) return res.data.users;
-        if (Array.isArray(res.data.content)) return res.data.content;
-        return [];
-      };
-
-      try {
-        const settleRes = await axios.get(`http://localhost:8085/api/settlements/pending/${tenantId}?t=${ts}`, authH);
-        setPendingCash(settleRes.data || {});
-      } catch(e) { console.warn("Settlement API blocked"); }
-
-      try {
-        const routesRes = await axios.get(`http://localhost:8085/api/routes?t=${ts}`, authH);
-        setRoutes(extractArray(routesRes));
-      } catch (e) { console.warn("Routes API missing"); }
-
-      // ✅ THE NEW PENDING LOANS FETCH BLOCK IS SAFELY ADDED HERE
-      try {
-        const loansRes = await axios.get(`http://localhost:8085/api/loans/pending?t=${ts}`, authH);
-        setPendingLoans(extractArray(loansRes));
-      } catch(e) { console.warn("Pending Loans API blocked/missing"); }
-
-      try {
-        // 1. Core Data
-        const [agentsRes, branchesRes] = await Promise.all([
-          axios.get(`http://localhost:8085/api/users/tenant/${tenantId}?t=${ts}`, authH),
-          axios.get(`http://localhost:8085/api/branches/tenant/${tenantId}?t=${ts}`, authH),
-        ]);
-
-        const agentList = extractArray(agentsRes);
-        const branchList = extractArray(branchesRes);
-        setAgents(agentList);
-        setBranches(branchList);
-
-        // 2. Customers Data
-        let customerList = [];
-        try {
-          const custRes = await axios.get(`http://localhost:8085/api/customers/tenant/${tenantId}?t=${ts}`, authH);
-          customerList = extractArray(custRes);
-          setCustomers(customerList);
-        } catch (e) { console.warn("Customer API missing/blocked."); }
-
-        // 3. Transaction/Activity Data
-        try {
-          const txRes = await axios.get(`http://localhost:8085/api/transactions/recent/${tenantId}?t=${ts}`, authH);
-          setActivity(extractArray(txRes));
-        } catch (e) { console.warn("Transaction API missing/blocked."); }
-
-        // 4. Stats Data
-        try {
-          const statsRes = await axios.get(`http://localhost:8085/api/stats/tenant/${tenantId}?t=${ts}`, authH);
-          setStats(statsRes.data);
-        } catch (e) {
-          console.warn("Stats API missing/blocked. Using UI fallbacks.");
-          setStats({
-            agentCount: agentList.filter(a => a.role === 'AGENT').length,
-            managerCount: agentList.filter(a => a.role === 'MANAGER').length,
-            branchCount: branchList.length,
-            customerCount: customerList.length,
-            todayCollection: 0,
-            totalPortfolio: 0,
-          });
-        }
-
-      } catch (e) {
-        console.error("Critical API Failure: Core data could not load.", e);
-      } finally {
-        setLoading(false);
-      }
+    const extractArray = (res) => {
+      if (!res || !res.data) return [];
+      if (Array.isArray(res.data)) return res.data;
+      if (Array.isArray(res.data.data)) return res.data.data;
+      if (Array.isArray(res.data.users)) return res.data.users;
+      if (Array.isArray(res.data.content)) return res.data.content;
+      return [];
     };
+
+    try {
+      const settleRes = await axios.get(`http://localhost:8085/api/settlements/pending/${tenantId}?t=${ts}`, authH);
+      setPendingCash(settleRes.data || {});
+    } catch(e) { console.warn("Settlement API blocked"); }
+
+    try {
+      const routesRes = await axios.get(`http://localhost:8085/api/routes?t=${ts}`, authH);
+      setRoutes(extractArray(routesRes));
+    } catch (e) { console.warn("Routes API missing"); }
+
+    try {
+      const loansRes = await axios.get(`http://localhost:8085/api/loans/pending?t=${ts}`, authH);
+      setPendingLoans(extractArray(loansRes));
+    } catch(e) { console.warn("Pending Loans API blocked/missing"); }
+
+    try {
+      const [agentsRes, branchesRes] = await Promise.all([
+        axios.get(`http://localhost:8085/api/users/tenant/${tenantId}?t=${ts}`, authH),
+        axios.get(`http://localhost:8085/api/branches/tenant/${tenantId}?t=${ts}`, authH),
+      ]);
+
+      const agentList = extractArray(agentsRes);
+      const branchList = extractArray(branchesRes);
+      setAgents(agentList);
+      setBranches(branchList);
+
+      let customerList = [];
+      try {
+        const custRes = await axios.get(`http://localhost:8085/api/customers/tenant/${tenantId}?t=${ts}`, authH);
+        customerList = extractArray(custRes);
+        setCustomers(customerList);
+      } catch (e) { console.warn("Customer API missing/blocked."); }
+
+      try {
+        const txRes = await axios.get(`http://localhost:8085/api/transactions/recent/${tenantId}?t=${ts}`, authH);
+        setActivity(extractArray(txRes));
+      } catch (e) { console.warn("Transaction API missing/blocked."); }
+
+      try {
+        const statsRes = await axios.get(`http://localhost:8085/api/stats/tenant/${tenantId}?t=${ts}`, authH);
+        setStats(statsRes.data);
+      } catch (e) {
+        setStats({
+          agentCount: agentList.filter(a => a.role === 'AGENT').length,
+          managerCount: agentList.filter(a => a.role === 'MANAGER').length,
+          branchCount: branchList.length,
+          customerCount: customerList.length,
+          todayCollection: 0,
+          totalPortfolio: 0,
+        });
+      }
+
+    } catch (e) {
+      console.error("Critical API Failure: Core data could not load.", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => { fetchAll(); }, []);
 
-  // --- ACTIONS ---
   const addBranch = async () => {
     if (!branchName) return;
     try {
@@ -601,7 +569,6 @@ export default function AdminDashboard({ user, handleLogout }) {
     } catch (e) { alert(e.response?.data || 'Failed'); }
   };
 
-  // Filter Logic
   const filteredAgents = agents.filter(a => {
     const q = search.toLowerCase();
     const mQ = !q || a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q);
@@ -618,20 +585,16 @@ export default function AdminDashboard({ user, handleLogout }) {
   const hour  = clock.getHours();
   const greeting = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
 
-  // ── 🛡️ 4-TIER UI FILTER ──
-    // This automatically hides tabs if the user's role isn't in the 'roles' array.
-    const TABS = [
-      { id:'overview',   label:'Overview',   icon:'◈', roles: ['ADMIN', 'MANAGER'] },
-      { id:'settlements',label:'Settlements',icon:'🤝', roles: ['ADMIN', 'MANAGER'] },
-      { id:'logistics',  label:'Logistics',  icon:'🗺️', roles: ['ADMIN', 'MANAGER'] },
-      { id:'customers',  label:'Customers',  icon:'◎', roles: ['ADMIN', 'MANAGER'] },
-      { id:'agents',     label:'Users',      icon:'◉', roles: ['ADMIN', 'MANAGER'] },
-
-      // 🔒 RESTRICTED TABS: Only Company Admins can see these
-      { id:'approvals',  label:'Approvals',  icon:'📝', roles: ['ADMIN'] }, // <-- ADDED THIS!
-      { id:'branches',   label:'Branches',   icon:'◧', roles: ['ADMIN'] },
-      { id:'analytics',  label:'Analytics',  icon:'◫', roles: ['ADMIN'] },
-    ].filter(t => t.roles.includes(user?.role)); // <-- This filter is the magic security key
+  const TABS = [
+    { id:'overview',   label:'Overview',   icon:'◈', roles: ['ADMIN', 'MANAGER'] },
+    { id:'settlements',label:'Settlements',icon:'🤝', roles: ['ADMIN', 'MANAGER'] },
+    { id:'logistics',  label:'Logistics',  icon:'🗺️', roles: ['ADMIN', 'MANAGER'] },
+    { id:'customers',  label:'Customers',  icon:'◎', roles: ['ADMIN', 'MANAGER'] },
+    { id:'agents',     label:'Users',      icon:'◉', roles: ['ADMIN', 'MANAGER'] },
+    { id:'approvals',  label:'Approvals',  icon:'📝', roles: ['ADMIN'] },
+    { id:'branches',   label:'Branches',   icon:'◧', roles: ['ADMIN'] },
+    { id:'analytics',  label:'Analytics',  icon:'◫', roles: ['ADMIN'] },
+  ].filter(t => t.roles.includes(user?.role));
 
   return (
     <>
@@ -640,9 +603,8 @@ export default function AdminDashboard({ user, handleLogout }) {
 
       <div style={{ display:'flex', height:'calc(100vh - 36px)', overflow:'hidden' }}>
 
-        {/* ── Sidebar ───────────────────────────────────────────────────── */}
+        {/* ── Sidebar ── */}
         <aside style={{ width:220, flexShrink:0, background:G.surface, borderRight:`1px solid ${G.border}`, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-          {/* Logo */}
           <div style={{ padding:'22px 20px 18px', borderBottom:`1px solid ${G.border}` }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ width:34, height:34, borderRadius:9, background:G.accentBg, border:`1px solid ${G.accent}33`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>₿</div>
@@ -653,7 +615,6 @@ export default function AdminDashboard({ user, handleLogout }) {
             </div>
           </div>
 
-          {/* Nav */}
           <nav style={{ padding:'12px 10px', flex:1 }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -675,7 +636,6 @@ export default function AdminDashboard({ user, handleLogout }) {
             ))}
           </nav>
 
-          {/* User card */}
           <div style={{ margin:10, padding:'12px 14px', background:G.card, border:`1px solid ${G.border}`, borderRadius:10 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
               <div style={{ width:32, height:32, borderRadius:8, background:G.accentBg, border:`1px solid ${G.accent}33`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:600, color:G.accent, fontFamily:'var(--font-display)' }}>
@@ -693,10 +653,12 @@ export default function AdminDashboard({ user, handleLogout }) {
           </div>
         </aside>
 
-        {/* ── Main ──────────────────────────────────────────────────────── */}
+        {/* ── Main Content ── */}
         <main style={{ flex:1, overflowY:'auto', padding:'28px 32px' }}>
 
-          {/* ════ OVERVIEW ════════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+              TAB: OVERVIEW
+              ════════════════════════════════════════════════════════════ */}
           {tab === 'overview' && (
             <div>
               <div className="fade-up" style={{ marginBottom:28 }}>
@@ -708,282 +670,6 @@ export default function AdminDashboard({ user, handleLogout }) {
                 </p>
               </div>
 
-
-              {/* ════ MAKER-CHECKER APPROVALS ════════════════════════════════════════ */}
-                        {tab === 'approvals' && (
-                          <div>
-                            <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                              <div>
-                                <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Maker-Checker Authorization</h1>
-                                <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Review and authorize loan disbursements requested by Branch Managers.</p>
-                              </div>
-                            </div>
-
-                            <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px,1fr))', gap:16 }}>
-                              {pendingLoans.length === 0 ? (
-                                <div style={{ gridColumn:'1/-1', padding:60, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:13 }}>
-                                  No pending loan requests. You are all caught up!
-                                </div>
-                              ) : pendingLoans.map((loan) => (
-                                <div key={loan.id} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden' }}>
-                                  <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${G.info},${G.info}44)` }}/>
-
-                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                                    <div>
-                                      <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:G.text }}>{loan.customer?.name || 'Unknown Customer'}</div>
-                                      <div style={{ fontSize:11, color:G.textSub }}>Requested by Branch Manager</div>
-                                    </div>
-                                    <span className="tag tag-amber">PENDING</span>
-                                  </div>
-
-                                  <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, padding:16, marginBottom:16 }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                                      <span style={{ fontSize:12, color:G.textSub }}>Principal Amount</span>
-                                      <span style={{ fontSize:14, fontWeight:700, color:G.text }}>{fmtR(loan.principalAmount)}</span>
-                                    </div>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                                      <span style={{ fontSize:12, color:G.textSub }}>Interest Rate</span>
-                                      <span style={{ fontSize:12, color:G.text }}>{loan.interestRate}%</span>
-                                    </div>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                                      <span style={{ fontSize:12, color:G.textSub }}>Processing Fee</span>
-                                      <span style={{ fontSize:12, color:G.text }}>{fmtR(loan.processingFeeAmount || 0)}</span>
-                                    </div>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                                      <span style={{ fontSize:12, color:G.textSub }}>Daily EMI</span>
-                                      <span style={{ fontSize:12, color:G.accent }}>{fmtR(loan.dailyEmiAmount)} / day</span>
-                                    </div>
-                                    <div style={{ display:'flex', justifyContent:'space-between', paddingTop:8, borderTop:`1px solid ${G.border}` }}>
-                                      <span style={{ fontSize:12, color:G.textSub }}>Total Repayment Due</span>
-                                      <span style={{ fontSize:12, color:G.warn, fontWeight:600 }}>{fmtR(loan.totalAmountDue)}</span>
-                                    </div>
-                                  </div>
-
-                                  <button
-                                    className="btn-primary"
-                                    style={{ width:'100%', background:G.info, color:'#fff' }}
-                                    onClick={async () => {
-                                      if(window.confirm(`Are you sure you want to disburse ${fmtR(loan.principalAmount)} to ${loan.customer?.name}?`)) {
-                                        try {
-                                          await axios.put(`http://localhost:8085/api/loans/approve/${loan.id}`, {}, authH);
-                                          alert("✅ Loan Approved! The EMI clock begins tomorrow.");
-                                          fetchAll(); // Refresh the board
-                                        } catch(e) {
-                                          alert("Error approving loan: " + (e.response?.data || e.message));
-                                        }
-                                      }
-                                    }}
-                                  >
-                                    ✓ Authorize & Disburse
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-              {/* ════ SETTLEMENTS (CASH HANDOVER) ════════════════════════════════ */}
-                        {tab === 'settlements' && (
-                          <div>
-                            <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                              <div>
-                                <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>End of Day Settlement</h1>
-                                <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Verify physical cash handed over by field agents.</p>
-                              </div>
-                            </div>
-
-                            <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px,1fr))', gap:16 }}>
-                              {Object.keys(pendingCash).length === 0 ? (
-                                <div style={{ gridColumn:'1/-1', padding:60, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:13 }}>
-                                  All agents are fully settled! No pending cash in transit.
-                                </div>
-                              ) : (
-                                Object.entries(pendingCash).map(([agentKey, data]) => {
-                                  const [agentName, agentId] = agentKey.split('|');
-                                  return (
-                                    <div key={agentId} style={{ background:G.card, border:`1px solid ${G.warn}44`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden' }}>
-                                      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${G.warn},${G.warn}44)` }}/>
-
-                                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-                                        <div>
-                                          <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:G.text }}>{agentName}</div>
-                                          <div style={{ fontSize:11, color:G.textSub }}>Agent ID: {agentId}</div>
-                                        </div>
-                                        <span className="tag tag-amber">UNSETTLED</span>
-                                      </div>
-
-                                      <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, padding:16, marginBottom:16 }}>
-                                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                                          <span style={{ fontSize:12, color:G.textSub }}>Physical Cash Due</span>
-                                          <span style={{ fontSize:16, fontWeight:700, color:G.warn, fontFamily:'var(--font-display)' }}>{fmtR(data.totalCash)}</span>
-                                        </div>
-                                        <div style={{ display:'flex', justifyContent:'space-between' }}>
-                                          <span style={{ fontSize:12, color:G.textSub }}>Transactions</span>
-                                          <span style={{ fontSize:12, color:G.text }}>{data.transactionCount} receipts</span>
-                                        </div>
-                                      </div>
-
-                                      <button
-                                        className="btn-primary"
-                                        style={{ width:'100%', background:G.accent, color:'#000' }}
-                                        onClick={async () => {
-                                          if(window.confirm(`Did you physically receive exactly ${fmtR(data.totalCash)} from ${agentName}?`)) {
-                                            await axios.post(`http://localhost:8085/api/settlements/confirm/${agentId}`, {}, authH);
-                                            fetchAll(); // Refresh the board
-                                          }
-                                        }}
-                                      >
-                                        Verify & Settle Cash
-                                      </button>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-
-                    {/* ════ LOGISTICS & ROUTES ════════════════════════════════════════ */}
-                             {/* ════ LOGISTICS & ROUTES ════════════════════════════════════════ */}
-                                       {tab === 'logistics' && (
-                                         <div>
-                                           <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-                                             <div>
-                                               <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Route Management</h1>
-                                               <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Group customers geographically and assign field agents.</p>
-                                             </div>
-                                             <button className="btn-primary" onClick={async () => {
-                                               const name = window.prompt("Enter new route name (e.g., Station Road):");
-                                               if (name) {
-                                                 try {
-                                                   await axios.post('http://localhost:8085/api/routes/create', { routeName: name }, authH);
-                                                   fetchAll();
-                                                 } catch (e) { alert("Failed to create route"); }
-                                               }
-                                             }}>+ Create Route</button>
-                                           </div>
-
-                                           <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:20 }}>
-
-                                             {/* LEFT: ROUTE LIST */}
-                                             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                                               <h3 style={{ fontSize:14, color:G.text }}>Active Routes</h3>
-                                               {routes.length === 0 ? (
-                                                 <div style={{ padding:30, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:12 }}>
-                                                   No routes created yet.
-                                                 </div>
-                                               ) : routes.map(r => {
-                                                 const routeCusts = customers.filter(c => c.route?.id === r.id);
-                                                 const isSelected = selectedRoute?.id === r.id;
-                                                 return (
-                                                   <div key={r.id} onClick={() => setSelectedRoute(r)} style={{
-                                                     padding:16, background:isSelected ? `${G.accent}15` : G.surface,
-                                                     border:`1px solid ${isSelected ? G.accent : G.border}`,
-                                                     borderRadius:G.rLg, cursor:'pointer', transition:'all .2s'
-                                                   }}>
-                                                     <div style={{ fontWeight:700, color:isSelected ? G.accent : G.text, fontFamily:'var(--font-display)', fontSize:16 }}>
-                                                       {r.routeName || r.name}
-                                                     </div>
-                                                     <div style={{ fontSize:11, color:G.textSub, marginTop:6 }}>
-                                                       {routeCusts.length} customers assigned
-                                                     </div>
-                                                   </div>
-                                                 )
-                                               })}
-                                             </div>
-
-                                             {/* RIGHT: ROUTE DETAILS & ASSIGNMENT */}
-                                             <div style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:24, display:'flex', flexDirection:'column' }}>
-                                               {!selectedRoute ? (
-                                                 <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:G.muted, fontSize:13 }}>
-                                                   <div style={{ fontSize:32, marginBottom:10 }}>🗺️</div>
-                                                   Select a route from the left to manage it.
-                                                 </div>
-                                               ) : (
-                                                 <div className="fade-up">
-                                                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, paddingBottom:16, borderBottom:`1px solid ${G.border}` }}>
-                                                     <div>
-                                                       <h2 style={{ fontFamily:'var(--font-display)', fontSize:20, fontWeight:700, color:G.accent }}>{selectedRoute.routeName || selectedRoute.name}</h2>
-                                                       <div style={{ fontSize:12, color:G.textSub, marginTop:4 }}>Assign customers and dispatch an agent.</div>
-                                                     </div>
-
-                                                     {/* DISPATCH AGENT BTN */}
-                                                     <button className="btn-warn" onClick={async () => {
-                                                       const agentId = window.prompt(`Enter Agent ID to walk this route today:\n(Available Agents: ${agents.filter(a=>a.role==='AGENT').map(a => `${a.id}-${a.name}`).join(', ')})`);
-                                                       if(agentId) {
-                                                         try {
-                                                           await axios.post('http://localhost:8085/api/routes/assign-shift', { routeId: selectedRoute.id, agentId: parseInt(agentId) }, authH);
-                                                           alert("Shift successfully assigned! Agent will see this route on their app.");
-                                                         } catch(e) { alert("Failed to assign shift."); }
-                                                       }
-                                                     }}>
-                                                       🚶 Dispatch Agent
-                                                     </button>
-                                                   </div>
-
-                                                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-                                                     {/* CURRENTLY ON ROUTE */}
-                                                     <div>
-                                                       <h4 style={{ fontSize:11, color:G.textSub, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Sequence / Assigned</h4>
-                                                       <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                                                         {customers.filter(c => c.route?.id === selectedRoute.id)
-                                                           .sort((a,b) => (a.routeSequence||0) - (b.routeSequence||0))
-                                                           .map(c => (
-                                                             <div key={c.id} style={{ padding:'10px 14px', background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, display:'flex', alignItems:'center', gap:12 }}>
-                                                               <div style={{ width:24, height:24, borderRadius:6, background:G.bg, color:G.muted, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700 }}>
-                                                                 {c.routeSequence || 0}
-                                                               </div>
-                                                               <div style={{ flex:1 }}>
-                                                                 <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
-                                                                 <div style={{ fontSize:10, color:G.textSub }}>ACC: {c.accountNumber}</div>
-                                                               </div>
-                                                             </div>
-                                                         ))}
-                                                         {customers.filter(c => c.route?.id === selectedRoute.id).length === 0 && (
-                                                           <div style={{ fontSize:12, color:G.muted, fontStyle:'italic' }}>No customers assigned yet.</div>
-                                                         )}
-                                                       </div>
-                                                     </div>
-
-                                                     {/* UNASSIGNED CUSTOMERS */}
-                                                     <div>
-                                                       <h4 style={{ fontSize:11, color:G.warn, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Unassigned Pool</h4>
-                                                       <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'400px', overflowY:'auto', paddingRight:4 }}>
-                                                         {customers.filter(c => !c.route).map(c => (
-                                                           <div key={c.id} style={{ padding:'10px 14px', background:G.bg, border:`1px dashed ${G.borderHi}`, borderRadius:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                                             <div>
-                                                               <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
-                                                               <div style={{ fontSize:10, color:G.textSub }}>{c.accountNumber}</div>
-                                                             </div>
-                                                             <button className="btn-ghost" style={{ padding:'4px 8px', fontSize:10, color:G.accent }} onClick={async () => {
-                                                               const seq = window.prompt(`Enter sequence number for ${c.name} on this route:`, "1");
-                                                               if(seq) {
-                                                                 try {
-                                                                   await axios.post('http://localhost:8085/api/routes/assign-customer', {
-                                                                     customerId: c.id, routeId: selectedRoute.id, routeSequence: parseInt(seq)
-                                                                   }, authH);
-                                                                   fetchAll();
-                                                                 } catch(e) { alert("Failed to assign"); }
-                                                               }
-                                                             }}>+ Add</button>
-                                                           </div>
-                                                         ))}
-                                                         {customers.filter(c => !c.route).length === 0 && (
-                                                           <div style={{ fontSize:12, color:G.accent, fontStyle:'italic' }}>All customers have a route!</div>
-                                                         )}
-                                                       </div>
-                                                     </div>
-                                                   </div>
-
-                                                 </div>
-                                               )}
-                                             </div>
-                                           </div>
-                                         </div>
-                                       )}
-
-              {/* Stat cards */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(210px, 1fr))', gap:16, marginBottom:28 }}>
                 <StatCard label="Field agents"       value={stats?.agentCount    ?? agents.filter(a=>a.role==='AGENT').length} sub="Active collectors"   spark={SPARK}               color={G.accent}  icon="👤" delay={1} />
                 <StatCard label="Total customers"    value={stats?.customerCount ?? customers.length} sub="Across all branches"  spark={SPARK.map(v=>v*.8)}  color={G.info}    icon="🧾" delay={2} />
@@ -992,9 +678,7 @@ export default function AdminDashboard({ user, handleLogout }) {
                 <StatCard label="Branches"           value={stats?.branchCount   ?? branches.length} sub="Active locations"    spark={SPARK.map(v=>v*.6)}  color="#06b6d4"   icon="🏢" delay={5} />
               </div>
 
-              {/* Lower grid */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:20 }}>
-                {/* Recent users */}
                 <div className="fade-up-3" style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, overflow:'hidden' }}>
                   <div style={{ padding:'16px 20px', borderBottom:`1px solid ${G.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                     <div>
@@ -1019,7 +703,6 @@ export default function AdminDashboard({ user, handleLogout }) {
                   }
                 </div>
 
-                {/* Right column */}
                 <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
                   <div className="fade-up-4" style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:20 }}>
                     <div style={{ fontFamily:'var(--font-display)', fontSize:14, fontWeight:700, marginBottom:14 }}>Quick actions</div>
@@ -1044,12 +727,8 @@ export default function AdminDashboard({ user, handleLogout }) {
                       <div key={i} style={{ display:'flex', gap:10, padding:'10px 0', borderBottom:`1px solid ${G.border}` }}>
                         <div style={{ width:30, height:30, borderRadius:8, flexShrink:0, background:`${G.accent}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>💳</div>
                         <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:12, color:G.text }}>
-                            {t.customer?.name || 'Customer'} — <span style={{ color:G.accent }}>{fmtR(t.amount)}</span>
-                          </div>
-                          <div style={{ fontSize:11, color:G.muted, marginTop:2 }}>
-                            {t.agent?.name || 'Agent'} · {t.paymentMode || 'CASH'}
-                          </div>
+                          <div style={{ fontSize:12, color:G.text }}>{t.customer?.name || 'Customer'} — <span style={{ color:G.accent }}>{fmtR(t.amount)}</span></div>
+                          <div style={{ fontSize:11, color:G.muted, marginTop:2 }}>{t.agent?.name || 'Agent'} · {t.paymentMode || 'CASH'}</div>
                         </div>
                         <div style={{ fontSize:10, color:G.muted, flexShrink:0 }}>
                           {new Date(t.transactionDate).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
@@ -1077,7 +756,279 @@ export default function AdminDashboard({ user, handleLogout }) {
             </div>
           )}
 
-          {/* ════ USERS ═══════════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+              TAB: SETTLEMENTS  ← NOW AT CORRECT LEVEL (was inside overview)
+              ════════════════════════════════════════════════════════════ */}
+          {tab === 'settlements' && (
+            <div>
+              <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                <div>
+                  <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>End of Day Settlement</h1>
+                  <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Verify physical cash handed over by field agents.</p>
+                </div>
+              </div>
+
+              <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px,1fr))', gap:16 }}>
+                {Object.keys(pendingCash).length === 0 ? (
+                  <div style={{ gridColumn:'1/-1', padding:60, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:13 }}>
+                    All agents are fully settled! No pending cash in transit.
+                  </div>
+                ) : (
+                  Object.entries(pendingCash).map(([agentKey, data]) => {
+                    const [agentName, agentId] = agentKey.split('|');
+                    return (
+                      <div key={agentId} style={{ background:G.card, border:`1px solid ${G.warn}44`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden' }}>
+                        <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${G.warn},${G.warn}44)` }}/>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                          <div>
+                            <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:G.text }}>{agentName}</div>
+                            <div style={{ fontSize:11, color:G.textSub }}>Agent ID: {agentId}</div>
+                          </div>
+                          <span className="tag tag-amber">UNSETTLED</span>
+                        </div>
+                        <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, padding:16, marginBottom:16 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                            <span style={{ fontSize:12, color:G.textSub }}>Physical Cash Due</span>
+                            <span style={{ fontSize:16, fontWeight:700, color:G.warn, fontFamily:'var(--font-display)' }}>{fmtR(data.totalCash)}</span>
+                          </div>
+                          <div style={{ display:'flex', justifyContent:'space-between' }}>
+                            <span style={{ fontSize:12, color:G.textSub }}>Transactions</span>
+                            <span style={{ fontSize:12, color:G.text }}>{data.transactionCount} receipts</span>
+                          </div>
+                        </div>
+                        <button
+                          className="btn-primary"
+                          style={{ width:'100%', background:G.accent, color:'#000' }}
+                          onClick={async () => {
+                            if(window.confirm(`Did you physically receive exactly ${fmtR(data.totalCash)} from ${agentName}?`)) {
+                              try {
+                                await axios.post(`http://localhost:8085/api/settlements/confirm/${agentId}`, {}, authH);
+                                fetchAll();
+                              } catch (e) {
+                                alert("Failed to settle cash. Check your connection.");
+                              }
+                            }
+                          }}
+                        >
+                          Verify & Settle Cash
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              TAB: LOGISTICS  ← NOW AT CORRECT LEVEL (was inside overview)
+              ════════════════════════════════════════════════════════════ */}
+          {tab === 'logistics' && (
+            <div>
+              <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                <div>
+                  <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Route Management</h1>
+                  <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Group customers geographically and assign field agents.</p>
+                </div>
+                <button className="btn-primary" onClick={async () => {
+                  const name = window.prompt("Enter new route name (e.g., Station Road):");
+                  if (name) {
+                    try {
+                      await axios.post('http://localhost:8085/api/routes/create', { routeName: name }, authH);
+                      fetchAll();
+                    } catch (e) { alert("Failed to create route"); }
+                  }
+                }}>+ Create Route</button>
+              </div>
+
+              <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:20 }}>
+                {/* LEFT: ROUTE LIST */}
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  <h3 style={{ fontSize:14, color:G.text }}>Active Routes</h3>
+                  {routes.length === 0 ? (
+                    <div style={{ padding:30, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:12 }}>
+                      No routes created yet.
+                    </div>
+                  ) : routes.map(r => {
+                    const routeCusts = customers.filter(c => c.route?.id === r.id);
+                    const isSelected = selectedRoute?.id === r.id;
+                    return (
+                      <div key={r.id} onClick={() => setSelectedRoute(r)} style={{
+                        padding:16, background:isSelected ? `${G.accent}15` : G.surface,
+                        border:`1px solid ${isSelected ? G.accent : G.border}`,
+                        borderRadius:G.rLg, cursor:'pointer', transition:'all .2s'
+                      }}>
+                        <div style={{ fontWeight:700, color:isSelected ? G.accent : G.text, fontFamily:'var(--font-display)', fontSize:16 }}>
+                          {r.routeName || r.name}
+                        </div>
+                        <div style={{ fontSize:11, color:G.textSub, marginTop:6 }}>
+                          {routeCusts.length} customers assigned
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* RIGHT: ROUTE DETAILS */}
+                <div style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:24, display:'flex', flexDirection:'column' }}>
+                  {!selectedRoute ? (
+                    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:G.muted, fontSize:13 }}>
+                      <div style={{ fontSize:32, marginBottom:10 }}>🗺️</div>
+                      Select a route from the left to manage it.
+                    </div>
+                  ) : (
+                    <div className="fade-up">
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20, paddingBottom:16, borderBottom:`1px solid ${G.border}` }}>
+                        <div>
+                          <h2 style={{ fontFamily:'var(--font-display)', fontSize:20, fontWeight:700, color:G.accent }}>{selectedRoute.routeName || selectedRoute.name}</h2>
+                          <div style={{ fontSize:12, color:G.textSub, marginTop:4 }}>Assign customers and dispatch an agent.</div>
+                        </div>
+                        <button className="btn-warn" onClick={async () => {
+                          const agentId = window.prompt(`Enter Agent ID to walk this route today:\n(Available Agents: ${agents.filter(a=>a.role==='AGENT').map(a => `${a.id}-${a.name}`).join(', ')})`);
+                          if(agentId) {
+                            try {
+                              await axios.post('http://localhost:8085/api/routes/assign-shift', { routeId: selectedRoute.id, agentId: parseInt(agentId) }, authH);
+                              alert("Shift successfully assigned!");
+                            } catch(e) { alert("Failed to assign shift."); }
+                          }
+                        }}>
+                          🚶 Dispatch Agent
+                        </button>
+                      </div>
+
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                        <div>
+                          <h4 style={{ fontSize:11, color:G.textSub, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Sequence / Assigned</h4>
+                          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                            {customers.filter(c => c.route?.id === selectedRoute.id)
+                              .sort((a,b) => (a.routeSequence||0) - (b.routeSequence||0))
+                              .map(c => (
+                                <div key={c.id} style={{ padding:'10px 14px', background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, display:'flex', alignItems:'center', gap:12 }}>
+                                  <div style={{ width:24, height:24, borderRadius:6, background:G.bg, color:G.muted, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700 }}>
+                                    {c.routeSequence || 0}
+                                  </div>
+                                  <div style={{ flex:1 }}>
+                                    <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
+                                    <div style={{ fontSize:10, color:G.textSub }}>ACC: {c.accountNumber}</div>
+                                  </div>
+                                </div>
+                            ))}
+                            {customers.filter(c => c.route?.id === selectedRoute.id).length === 0 && (
+                              <div style={{ fontSize:12, color:G.muted, fontStyle:'italic' }}>No customers assigned yet.</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 style={{ fontSize:11, color:G.warn, textTransform:'uppercase', letterSpacing:'1px', marginBottom:12 }}>Unassigned Pool</h4>
+                          <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'400px', overflowY:'auto', paddingRight:4 }}>
+                            {customers.filter(c => !c.route).map(c => (
+                              <div key={c.id} style={{ padding:'10px 14px', background:G.bg, border:`1px dashed ${G.borderHi}`, borderRadius:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                                <div>
+                                  <div style={{ fontSize:12, fontWeight:500, color:G.text }}>{c.name}</div>
+                                  <div style={{ fontSize:10, color:G.textSub }}>{c.accountNumber}</div>
+                                </div>
+                                <button className="btn-ghost" style={{ padding:'4px 8px', fontSize:10, color:G.accent }} onClick={async () => {
+                                  const seq = window.prompt(`Enter sequence number for ${c.name} on this route:`, "1");
+                                  if(seq) {
+                                    try {
+                                      await axios.post('http://localhost:8085/api/routes/assign-customer', {
+                                        customerId: c.id, routeId: selectedRoute.id, routeSequence: parseInt(seq)
+                                      }, authH);
+                                      fetchAll();
+                                    } catch(e) { alert("Failed to assign"); }
+                                  }
+                                }}>+ Add</button>
+                              </div>
+                            ))}
+                            {customers.filter(c => !c.route).length === 0 && (
+                              <div style={{ fontSize:12, color:G.accent, fontStyle:'italic' }}>All customers have a route!</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              TAB: APPROVALS  ← NOW AT CORRECT LEVEL (was inside overview)
+              ════════════════════════════════════════════════════════════ */}
+          {tab === 'approvals' && (
+            <div>
+              <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                <div>
+                  <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Maker-Checker Authorization</h1>
+                  <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Review and authorize loan disbursements requested by Branch Managers.</p>
+                </div>
+              </div>
+
+              <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px,1fr))', gap:16 }}>
+                {pendingLoans.length === 0 ? (
+                  <div style={{ gridColumn:'1/-1', padding:60, textAlign:'center', background:G.card, border:`1px dashed ${G.borderHi}`, borderRadius:G.rLg, color:G.muted, fontSize:13 }}>
+                    No pending loan requests. You are all caught up!
+                  </div>
+                ) : pendingLoans.map((loan) => (
+                  <div key={loan.id} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden' }}>
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${G.info},${G.info}44)` }}/>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                      <div>
+                        <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, color:G.text }}>{loan.customer?.name || 'Unknown Customer'}</div>
+                        <div style={{ fontSize:11, color:G.textSub }}>Requested by Branch Manager</div>
+                      </div>
+                      <span className="tag tag-amber">PENDING</span>
+                    </div>
+                    <div style={{ background:G.surface, border:`1px solid ${G.border}`, borderRadius:8, padding:16, marginBottom:16 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                        <span style={{ fontSize:12, color:G.textSub }}>Principal Amount</span>
+                        <span style={{ fontSize:14, fontWeight:700, color:G.text }}>{fmtR(loan.principalAmount)}</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                        <span style={{ fontSize:12, color:G.textSub }}>Interest Rate</span>
+                        <span style={{ fontSize:12, color:G.text }}>{loan.interestRate}%</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                        <span style={{ fontSize:12, color:G.textSub }}>Processing Fee</span>
+                        <span style={{ fontSize:12, color:G.text }}>{fmtR(loan.processingFeeAmount || 0)}</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                        <span style={{ fontSize:12, color:G.textSub }}>Daily EMI</span>
+                        <span style={{ fontSize:12, color:G.accent }}>{fmtR(loan.dailyEmiAmount)} / day</span>
+                      </div>
+                      <div style={{ display:'flex', justifyContent:'space-between', paddingTop:8, borderTop:`1px solid ${G.border}` }}>
+                        <span style={{ fontSize:12, color:G.textSub }}>Total Repayment Due</span>
+                        <span style={{ fontSize:12, color:G.warn, fontWeight:600 }}>{fmtR(loan.totalAmountDue)}</span>
+                      </div>
+                    </div>
+                    <button
+                      className="btn-primary"
+                      style={{ width:'100%', background:G.info, color:'#fff' }}
+                      onClick={async () => {
+                        if(window.confirm(`Are you sure you want to disburse ${fmtR(loan.principalAmount)} to ${loan.customer?.name}?`)) {
+                          try {
+                            await axios.put(`http://localhost:8085/api/loans/approve/${loan.id}`, {}, authH);
+                            alert("✅ Loan Approved! The EMI clock begins tomorrow.");
+                            fetchAll();
+                          } catch(e) {
+                            alert("Error approving loan: " + (e.response?.data || e.message));
+                          }
+                        }
+                      }}
+                    >
+                      ✓ Authorize & Disburse
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              TAB: USERS
+              ════════════════════════════════════════════════════════════ */}
           {tab === 'agents' && (
             <div>
               <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
@@ -1113,7 +1064,7 @@ export default function AdminDashboard({ user, handleLogout }) {
                 {loading
                   ? <div style={{ padding:20 }}>{[1,2,3,4].map(i=><div key={i} className="skeleton" style={{ height:56, marginBottom:8 }}/>)}</div>
                   : filteredAgents.length === 0
-                    ? <div style={{ padding:60, textAlign:'center', color:G.muted, fontSize:13 }}>{search ? 'No users match.' : 'No users yet. Add your first agent.'}</div>
+                    ? <div style={{ padding:60, textAlign:'center', color:G.muted, fontSize:13 }}>{search ? 'No users match.' : 'No users yet.'}</div>
                     : filteredAgents.map((a,i) => (
                         <div key={a.id} style={{ display:'grid', gridTemplateColumns:'44px 1fr 110px 90px 100px 100px', alignItems:'center', gap:16, padding:'13px 20px', borderBottom:`1px solid ${G.border}` }}>
                           <div style={{ width:36, height:36, borderRadius:10, background:`${colors[i%colors.length]}22`, border:`1px solid ${colors[i%colors.length]}44`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:600, color:colors[i%colors.length] }}>{initials(a.name)}</div>
@@ -1129,7 +1080,9 @@ export default function AdminDashboard({ user, handleLogout }) {
             </div>
           )}
 
-          {/* ════ CUSTOMERS ═══════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+              TAB: CUSTOMERS
+              ════════════════════════════════════════════════════════════ */}
           {tab === 'customers' && (
             <div>
               <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
@@ -1140,14 +1093,12 @@ export default function AdminDashboard({ user, handleLogout }) {
                   </p>
                 </div>
               </div>
-
               <div className="fade-up-1" style={{ marginBottom:20 }}>
                 <div style={{ position:'relative' }}>
                   <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:G.muted, fontSize:13 }}>🔍</span>
                   <input value={custSearch} onChange={e => setCustSearch(e.target.value)} placeholder="Search by name or account number…" style={{ paddingLeft:34 }}/>
                 </div>
               </div>
-
               <div className="fade-up-2" style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, overflow:'hidden' }}>
                 <div style={{ display:'grid', gridTemplateColumns:'44px 1fr 130px 120px 140px', gap:16, padding:'10px 20px', borderBottom:`1px solid ${G.border}`, background:G.surface, fontSize:10, color:G.muted, letterSpacing:'.08em', textTransform:'uppercase' }}>
                   <div/><div>Name / Account</div><div>Phone</div><div>Balance</div><div>Agent</div>
@@ -1155,7 +1106,7 @@ export default function AdminDashboard({ user, handleLogout }) {
                 {loading
                   ? <div style={{ padding:20 }}>{[1,2,3,4,5].map(i=><div key={i} className="skeleton" style={{ height:56, marginBottom:8 }}/>)}</div>
                   : filteredCustomers.length === 0
-                    ? <div style={{ padding:60, textAlign:'center', color:G.muted, fontSize:13 }}>{custSearch ? 'No customers match.' : 'No customers yet. Agents must add them via mobile.'}</div>
+                    ? <div style={{ padding:60, textAlign:'center', color:G.muted, fontSize:13 }}>{custSearch ? 'No customers match.' : 'No customers yet.'}</div>
                     : filteredCustomers.map((c,i) => (
                         <div key={c.id} style={{ display:'grid', gridTemplateColumns:'44px 1fr 130px 120px 140px', alignItems:'center', gap:16, padding:'13px 20px', borderBottom:`1px solid ${G.border}` }}>
                           <div style={{ width:36, height:36, borderRadius:10, background:`${colors[i%colors.length]}22`, color:colors[i%colors.length], display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:600 }}>{initials(c.name)}</div>
@@ -1170,7 +1121,9 @@ export default function AdminDashboard({ user, handleLogout }) {
             </div>
           )}
 
-          {/* ════ BRANCHES ════════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+              TAB: BRANCHES
+              ════════════════════════════════════════════════════════════ */}
           {tab === 'branches' && (
             <div>
               <div className="fade-up" style={{ marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
@@ -1180,14 +1133,13 @@ export default function AdminDashboard({ user, handleLogout }) {
                 </div>
                 <button className="btn-primary" onClick={() => setShowAddBranch(true)}>+ New branch</button>
               </div>
-
               <div className="fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px,1fr))', gap:16 }}>
                 {branches.map((b,i) => {
                   const c = colors[i % colors.length];
                   const bAgents    = agents.filter(a => a.branch?.id === b.id);
                   const bCustomers = stats?.customersPerBranch?.[b.id] ?? 0;
                   return (
-                    <div key={b.id} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden', transition:'all .2s', cursor:'default' }}
+                    <div key={b.id} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22, position:'relative', overflow:'hidden', transition:'all .2s' }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor=`${c}55`; e.currentTarget.style.boxShadow=`0 0 30px ${c}10`; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor=G.border; e.currentTarget.style.boxShadow='none'; }}>
                       <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${c},${c}44)`, borderRadius:'18px 18px 0 0' }}/>
@@ -1213,15 +1165,15 @@ export default function AdminDashboard({ user, handleLogout }) {
             </div>
           )}
 
-          {/* ════ ANALYTICS ═══════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════
+              TAB: ANALYTICS
+              ════════════════════════════════════════════════════════════ */}
           {tab === 'analytics' && (
             <div>
               <div className="fade-up" style={{ marginBottom:28 }}>
                 <h1 style={{ fontFamily:'var(--font-display)', fontSize:24, fontWeight:800, letterSpacing:'-.02em' }}>Analytics</h1>
                 <p style={{ color:G.textSub, fontSize:12, marginTop:4 }}>Portfolio performance overview</p>
               </div>
-
-              {/* KPI strip */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:24 }}>
                 {[
                   { label:'Avg balance / customer', value: customers.length > 0 ? Math.round((stats?.totalPortfolio||0)/customers.length) : 0, prefix:'₹', color:G.accent },
@@ -1236,7 +1188,6 @@ export default function AdminDashboard({ user, handleLogout }) {
                   </div>
                 ))}
               </div>
-
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
                 {[
                   { label:'Collections trend',     data:[28,45,32,61,55,70,68,82,90,78,95,88], color:G.accent },
@@ -1246,7 +1197,7 @@ export default function AdminDashboard({ user, handleLogout }) {
                 ].map((c,i) => (
                   <div key={i} className={`fade-up-${i+1}`} style={{ background:G.card, border:`1px solid ${G.border}`, borderRadius:G.rLg, padding:22 }}>
                     <div style={{ fontFamily:'var(--font-display)', fontSize:14, fontWeight:700, marginBottom:4 }}>{c.label}</div>
-                    <div style={{ fontSize:11, color:G.textSub, marginBottom:18 }}>Last 12 months (mock — live in Phase 3)</div>
+                    <div style={{ fontSize:11, color:G.textSub, marginBottom:18 }}>Last 12 months</div>
                     <SparkBar data={c.data} color={c.color} height={80}/>
                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:10, fontSize:10, color:G.muted }}>
                       <span>Jan</span><span>Mar</span><span>Jun</span><span>Sep</span><span>Dec</span>
@@ -1254,19 +1205,13 @@ export default function AdminDashboard({ user, handleLogout }) {
                   </div>
                 ))}
               </div>
-
-              <div className="fade-up-5" style={{ marginTop:20, padding:24, background:G.card, border:`1px solid ${G.accentGlow}`, borderRadius:G.rLg, textAlign:'center' }}>
-                <div style={{ fontSize:22, marginBottom:8 }}>📡</div>
-                <div style={{ fontFamily:'var(--font-display)', fontSize:16, fontWeight:700, marginBottom:6 }}>Live chart data connects in Phase 3</div>
-                <div style={{ fontSize:13, color:G.textSub }}>KPI strip above uses real data. Bar charts show historical trends — these will pull from a monthly aggregation endpoint once transaction volume grows.</div>
-              </div>
             </div>
           )}
 
         </main>
       </div>
 
-      {/* ── MODALS ──────────────────────────────────────────────────────── */}
+      {/* ── MODALS ── */}
       {showAddAgent && (
         <Modal title="Add new user" onClose={() => setShowAddAgent(false)}>
           <AddAgentForm
