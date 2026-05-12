@@ -19,6 +19,7 @@ public class CustomerController {
     @Autowired private UserRepository userRepository;
     @Autowired private JwtService jwtService;
     @Autowired private com.pigmypay.PSolutions.repository.RouteRepository routeRepository;
+    @Autowired private com.pigmypay.PSolutions.repository.AgentShiftRepository agentShiftRepository;
 
     private String extractToken(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -61,10 +62,32 @@ public class CustomerController {
             @PathVariable Long agentId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            // In a perfectly secure system, we should verify the token matches the agentId
-            // but for now, we just ensure the endpoint is open and returns the agent's specific list.
-            return ResponseEntity.ok(customerRepository.findByAssignedAgentId(agentId));
+            // Validate the token belongs to this exact agent (prevents agent A from querying agent B)
+            String token = extractToken(authHeader);
+            String userEmail = jwtService.extractUsername(token);
+            User tokenUser = userRepository.findByEmail(userEmail).orElseThrow();
+
+            if (!tokenUser.getId().equals(agentId)) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body("SECURITY VIOLATION: You can only fetch your own assigned route.");
+            }
+
+            // 🚨 STRICT ROUTE ENFORCEMENT: Find what route they are walking TODAY
+            java.util.List<com.pigmypay.PSolutions.model.AgentShift> activeShifts =
+                    agentShiftRepository.findByAgentIdAndStatus(agentId, "ACTIVE");
+
+            if (activeShifts.isEmpty()) {
+                // They have no route assigned today. Return an empty list.
+                return ResponseEntity.ok(java.util.List.of());
+            }
+
+            Long todaysRouteId = activeShifts.get(0).getRoute().getId();
+
+            // Return only the customers physically on today's route, ordered perfectly!
+            return ResponseEntity.ok(customerRepository.findByRouteIdOrderByRouteSequenceAsc(todaysRouteId));
+
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
@@ -75,27 +98,26 @@ public class CustomerController {
             @RequestBody Customer newCustomer,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            // 1. Identify WHO is adding this customer
             String token = extractToken(authHeader);
             String userEmail = jwtService.extractUsername(token);
             User requestingUser = userRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // 2. AUTO-FILL THE MISSING DATA
-            // The React app doesn't know the Tenant, so we force it based on the logged-in user!
-            newCustomer.setTenant(requestingUser.getTenant());
-
-            // If an Agent is adding the customer, auto-assign the customer to them
-            if (requestingUser.getRole() == Role.AGENT) {
-                newCustomer.setAssignedAgent(requestingUser);
+            // 🚨 THE ENTERPRISE HARD BLOCK 🚨
+            // If the user is an AGENT, violently reject the request.
+            if (requestingUser.getRole() == com.pigmypay.PSolutions.model.Role.AGENT) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .body("SECURITY VIOLATION: Field Agents are not authorized to create new customer accounts. Please direct the customer to the Branch Manager for KYC onboarding.");
             }
 
-            // 3. Save to database
+            // If they pass the check, assign the correct company tenant
+            newCustomer.setTenant(requestingUser.getTenant());
+
             Customer savedCustomer = customerRepository.save(newCustomer);
             return ResponseEntity.ok(savedCustomer);
 
         } catch (Exception e) {
-            e.printStackTrace(); // Prints the exact SQL error to your terminal if it fails again
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to save customer: " + e.getMessage());
         }
     }

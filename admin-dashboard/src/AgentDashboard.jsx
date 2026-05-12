@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Configure Axios
 const BASE_URL = 'http://localhost:8085';
 const api = axios.create({ baseURL: BASE_URL });
 
@@ -10,29 +9,24 @@ export default function AgentDashboard({ user, handleLogout }) {
   const [selectedCustomer, setSelected]     = useState(null);
   const [depositAmount, setDepositAmount]   = useState('');
   const [paymentMode, setPaymentMode]       = useState('CASH');
-  const [txType, setTxType]                 = useState('SAVINGS'); // 'SAVINGS' or 'EMI'
+  const [txType, setTxType]                 = useState('SAVINGS');
   const [activeLoan, setActiveLoan]         = useState(null);
   const [transactions, setTransactions]     = useState([]);
   const [status, setStatus]                 = useState({ type:'', message:'' });
   const [searchTerm, setSearch]             = useState('');
-  const [showAddForm, setShowAddForm]       = useState(false);
-  const [newCustomer, setNewCustomer]       = useState({ name:'', accountNumber:'', phoneNumber:'', currentBalance:0 });
   const [loadingCustomers, setLoadingC]     = useState(true);
   const [isSaving, setIsSaving]             = useState(false);
 
   const getAuth = () => ({ headers: { Authorization: `Bearer ${user.token}` } });
-
-  // Fallback for ID (handles both token structures)
   const agentId = user.id || user.userId;
 
   const fetchCustomers = async () => {
     setLoadingC(true);
     try {
       const ts = Date.now();
+      // Fetches only the customers assigned to their specific route for today!
       const res = await api.get(`/api/customers/agent/${agentId}?t=${ts}`, getAuth());
       const myCustomers = Array.isArray(res.data) ? res.data : [];
-
-      // Sort them by route sequence!
       myCustomers.sort((a, b) => (a.routeSequence || 999) - (b.routeSequence || 999));
       setCustomers(myCustomers);
     } catch (e) {
@@ -44,7 +38,6 @@ export default function AgentDashboard({ user, handleLogout }) {
 
   const handleSelectCustomer = async (customer) => {
     setSelected(customer);
-    setShowAddForm(false);
     setStatus({ type:'', message:'' });
     setTxType('SAVINGS');
     setDepositAmount('');
@@ -52,17 +45,15 @@ export default function AgentDashboard({ user, handleLogout }) {
 
     const ts = Date.now();
     try {
-      // 1. Fetch Transaction History
       const txRes = await api.get(`/api/transactions/history/${customer.id}?t=${ts}`, getAuth());
       setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
 
-      // 2. Fetch Active Loans to see if they owe an EMI today
       const loanRes = await api.get(`/api/loans/customer/${customer.id}?t=${ts}`, getAuth());
       const loans = Array.isArray(loanRes.data) ? loanRes.data : [];
       const active = loans.find(l => l.status === 'ACTIVE');
       if (active) {
         setActiveLoan(active);
-        setTxType('EMI'); // Auto-default to EMI collection if they have a loan
+        setTxType('EMI');
         setDepositAmount(active.dailyEmiAmount || '');
       }
     } catch (e) {
@@ -101,36 +92,6 @@ export default function AgentDashboard({ user, handleLogout }) {
     }
   };
 
-  const handleAddCustomer = async () => {
-      if (!newCustomer.name || !newCustomer.accountNumber || isSaving) return;
-      setIsSaving(true);
-
-      // 👇 FIXED: We must send the Tenant object so Java knows which company this customer belongs to
-      const payload = {
-        name: newCustomer.name,
-        accountNumber: newCustomer.accountNumber,
-        phoneNumber: newCustomer.phoneNumber,
-        currentBalance: 0,
-        assignedAgent: { id: agentId },
-        tenant: { id: user.tenantId || 1 } // <-- This prevents the 400 Bad Request!
-      };
-
-      try {
-        await api.post('/api/customers', payload, getAuth());
-        setStatus({ type:'success', message:`${newCustomer.name} added!` });
-        await new Promise(r => setTimeout(r, 300));
-        await fetchCustomers();
-        setShowAddForm(false);
-        setNewCustomer({ name:'', accountNumber:'', phoneNumber:'', currentBalance:0 });
-        setSearch('');
-      } catch (e) {
-        console.error("Save Customer Error:", e.response?.data); // Prints the exact Java error to console
-        setStatus({ type:'error', message:'Failed to create customer.' });
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
   const filtered = customers.filter(c =>
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || c.accountNumber?.includes(searchTerm)
   );
@@ -160,8 +121,6 @@ export default function AgentDashboard({ user, handleLogout }) {
         .ag-search { flex:1; background: #161b22; border: 1px solid #1e2530; color: #e2e8f0; border-radius: 8px; padding: 9px 12px; font-size: 12px; font-family: 'DM Mono', monospace; outline: none; transition: border-color .2s; }
         .ag-search:focus { border-color: #00ff88; }
         .ag-search::placeholder { color: #2d3748; }
-        .ag-add-btn { background: #00ff88; color: #000; border: none; border-radius: 8px; padding: 9px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Mono', monospace; transition: all .15s; white-space: nowrap; }
-        .ag-add-btn:hover { background: #00cc6a; }
         .ag-customer-list { flex: 1; overflow-y: auto; }
         .ag-customer-item { padding: 14px 16px; border-bottom: 1px solid #1e2530; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background .12s; }
         .ag-customer-item:hover { background: #161b22; }
@@ -191,10 +150,6 @@ export default function AgentDashboard({ user, handleLogout }) {
         .ag-txn-date { font-size: 11px; color: #4a5568; }
         .ag-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #2d3748; font-size: 13px; gap: 10px; text-align: center; padding: 40px; }
         .ag-empty-icon { font-size: 36px; opacity: .3; }
-        .ag-add-form { background: #161b22; border: 1px solid #1e2530; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-        .ag-form-input { width: 100%; background: #111318; border: 1px solid #1e2530; color: #e2e8f0; border-radius: 7px; padding: 10px 12px; font-size: 12px; font-family: 'DM Mono', monospace; outline: none; box-sizing: border-box; margin-bottom: 10px; transition: border-color .15s; }
-        .ag-form-input:focus { border-color: #00ff8866; }
-        .ag-form-input::placeholder { color: #2d3748; }
         .ag-loan-badge { background: rgba(255,165,2,.15); color: #ffa502; border: 1px solid rgba(255,165,2,.3); padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; letter-spacing: .05em; }
         .tx-toggle-container { display: flex; background: #111318; border: 1px solid #1e2530; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
         .tx-toggle-btn { flex: 1; text-align: center; padding: 8px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .2s; color: #718096; }
@@ -217,41 +172,32 @@ export default function AgentDashboard({ user, handleLogout }) {
             <div className="ag-portfolio">
               <div className="ag-portfolio-label">Total deposits</div>
               <div className="ag-portfolio-value"><span>₹</span>{totalPortfolio.toLocaleString('en-IN')}</div>
-              <div className="ag-portfolio-sub">{customers.length} customers assigned</div>
+              <div className="ag-portfolio-sub">{customers.length} customers assigned to today's route</div>
             </div>
 
             <div className="ag-search-row">
-              <input className="ag-search" placeholder="Search name or account…" value={searchTerm} onChange={e => setSearch(e.target.value)} />
-              <button className="ag-add-btn" onClick={() => { setShowAddForm(!showAddForm); setSelected(null); }}>
-                {showAddForm ? '✕' : '+ New'}
-              </button>
+              {/* 🚨 REMOVED THE + NEW BUTTON HERE 🚨 */}
+              <input className="ag-search" placeholder="Search route customers…" value={searchTerm} onChange={e => setSearch(e.target.value)} />
             </div>
 
-            {showAddForm && (
-              <div style={{ padding:'0 12px 12px' }}>
-                <div className="ag-add-form">
-                  <input className="ag-form-input" placeholder="Full name *" value={newCustomer.name} onChange={e => setNewCustomer({ ...newCustomer, name: e.target.value })} />
-                  <input className="ag-form-input" placeholder="Account number *" value={newCustomer.accountNumber} onChange={e => setNewCustomer({ ...newCustomer, accountNumber: e.target.value })} />
-                  <input className="ag-form-input" placeholder="Phone number" value={newCustomer.phoneNumber} onChange={e => setNewCustomer({ ...newCustomer, phoneNumber: e.target.value })} />
-                  <button className="ag-confirm-btn" style={{ fontSize:12, padding:'10px' }} onClick={handleAddCustomer} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save customer'}
-                  </button>
-                  {status.message && status.type === 'error' && <div style={{ marginTop:10, fontSize:11, color:'#ff4757' }}>{status.message}</div>}
-                </div>
-              </div>
-            )}
-
             <div className="ag-customer-list">
-              {loadingCustomers ? <div style={{ padding:20, color:'#4a5568', fontSize:12 }}>Loading assignments...</div> :
+              {loadingCustomers ? <div style={{ padding:20, color:'#4a5568', fontSize:12 }}>Loading route assignments...</div> :
                 filtered.map(c => (
                 <div key={c.id} className={`ag-customer-item ${selectedCustomer?.id === c.id ? 'active' : ''}`} onClick={() => handleSelectCustomer(c)}>
                   <div>
-                    <div className="ag-customer-name">{c.name}</div>
+                    <div className="ag-customer-name">
+                      {/* Show the physical route sequence number next to their name */}
+                      <span style={{ color:G.muted, marginRight:8, fontSize:11 }}>#{c.routeSequence || 0}</span>
+                      {c.name}
+                    </div>
                     <div className="ag-customer-acc">ACC: {c.accountNumber}</div>
                   </div>
                   <div className="ag-customer-bal">₹{(c.currentBalance || 0).toLocaleString('en-IN')}</div>
                 </div>
               ))}
+              {filtered.length === 0 && !loadingCustomers && (
+                 <div style={{ padding:20, color:'#4a5568', fontSize:12, textAlign:'center' }}>No customers found on this route.</div>
+              )}
             </div>
           </div>
 
@@ -324,7 +270,7 @@ export default function AgentDashboard({ user, handleLogout }) {
                 ))}
               </>
             ) : (
-              <div className="ag-empty"><div className="ag-empty-icon">◈</div><div>Select a customer to record a transaction</div></div>
+              <div className="ag-empty"><div className="ag-empty-icon">◈</div><div>Select a customer from your route to collect</div></div>
             )}
           </div>
         </div>

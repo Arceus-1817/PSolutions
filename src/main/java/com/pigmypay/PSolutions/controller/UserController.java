@@ -77,17 +77,22 @@ public class UserController {
     // ── POST create a new user ─────────────────────────────────────────────
     @PostMapping
     public ResponseEntity<?> createUser(
-            @RequestBody CreateUserRequest request,
+            @RequestBody CreateUserRequest request, // Using your DTO
             @RequestHeader("Authorization") String authHeader) {
         try {
             String token = extractToken(authHeader);
+            String currentUserEmail = jwtService.extractUsername(token);
             Long tokenTenantId = jwtService.extractTenantId(token);
+
+            // Find who is actually making this request
+            User requestingUser = userRepository.findByEmail(currentUserEmail)
+                    .orElseThrow(() -> new RuntimeException("Requesting user not found"));
 
             if (userRepository.findByEmail(request.getEmail()).isPresent()) {
                 return ResponseEntity.badRequest().body("Email already exists");
             }
 
-            // SECURE: Ignore request.getTenantId(). Map to the token's tenant.
+            // Fetch the Tenant securely from the token
             Tenant tenant = tenantRepository.findById(tokenTenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
@@ -96,19 +101,39 @@ public class UserController {
             user.setEmail(request.getEmail());
             user.setPhoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber() : "");
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setRole(Role.valueOf(request.getRole()));
-            user.setTenant(tenant);
 
-            if (request.getBranchId() != null) {
-                Branch branch = branchRepository.findById(request.getBranchId())
-                        .orElseThrow(() -> new RuntimeException("Branch not found"));
-                user.setBranch(branch);
+            // 🚨 THE ENTERPRISE HARD BLOCK 🚨
+            Role requestedRole = Role.valueOf(request.getRole());
+
+            if (requestingUser.getRole() == Role.MANAGER) {
+                // 1. Managers can ONLY create Agents
+                if (requestedRole == Role.MANAGER || requestedRole == Role.ADMIN || requestedRole == Role.SYSTEM_ADMIN) {
+                    return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                            .body("SECURITY VIOLATION: Branch Managers are only authorized to create Field Agents.");
+                }
+
+                // 2. Force the new agent into the Manager's own branch!
+                // (Even if the Manager tries to pass a different branchId in the request)
+                user.setRole(Role.AGENT);
+                user.setBranch(requestingUser.getBranch());
+            } else {
+                // If it's an ADMIN or SYSTEM_ADMIN, let them assign the role and branch normally
+                user.setRole(requestedRole);
+                if (request.getBranchId() != null) {
+                    Branch branch = branchRepository.findById(request.getBranchId())
+                            .orElseThrow(() -> new RuntimeException("Branch not found"));
+                    user.setBranch(branch);
+                }
             }
+
+            user.setTenant(tenant);
 
             User saved = userRepository.save(user);
             return ResponseEntity.ok(saved);
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Failed to create user: " + e.getMessage());
         }
     }
 

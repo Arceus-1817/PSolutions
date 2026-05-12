@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+
+
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const G = {
   bg:        '#0a0c0f',
@@ -196,6 +198,64 @@ function TickerBar({ stats }) {
   );
 }
 
+// ─── CUSTOMER ONBOARDING FORM ───────────────────────────────────────────────
+function AddCustomerForm({ token, onSuccess, onClose }) {
+  const [name, setName]                   = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [phone, setPhone]                 = useState('');
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState('');
+
+  const authH = { headers: { Authorization: `Bearer ${token}` } };
+
+  const submit = async () => {
+    if (!name || !accountNumber) {
+      setError('Name and Account Number are required.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+
+    try {
+      // The backend will securely auto-assign the Tenant based on the Manager's token!
+      await axios.post('http://localhost:8085/api/customers', {
+        name,
+        accountNumber,
+        phoneNumber: phone
+      }, authH);
+
+      await onSuccess();
+    } catch (e) {
+      setError(e.response?.data || 'Failed to create customer. Does the account number already exist?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:'0 16px' }}>
+        {field('Full Name', name, setName, { placeholder: 'Enter customer name' })}
+        {field('Account Number', accountNumber, setAccountNumber, { placeholder: 'e.g. ACC-1001' })}
+        {field('Phone Number', phone, setPhone, { placeholder: '10-digit mobile number' })}
+      </div>
+
+      {error && (
+        <div style={{ background:'rgba(255,71,87,.1)', border:'1px solid rgba(255,71,87,.25)', borderRadius:8, padding:'10px 14px', fontSize:12, color:G.danger, marginBottom:16 }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+        <button className="btn-ghost" onClick={onClose}>Cancel</button>
+        <button className="btn-primary" onClick={submit} disabled={loading}>
+          {loading ? 'Saving…' : 'Create Customer'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Forms & Modals ───────────────────────────────────────────────────────────
 function AddAgentForm({ user, branches, onSuccess, onClose }) {
   const [name, setName]         = useState('');
@@ -230,10 +290,16 @@ function AddAgentForm({ user, branches, onSuccess, onClose }) {
         {field('Phone',      phone,    setPhone,    { placeholder:'Phone number' })}
         {field('Email',      email,    setEmail,    { type:'email' })}
         {field('Password',   password, setPassword, { type:'password', placeholder:'Min 6 characters' })}
-        {field('Role',       role,     setRole,     { options:[
-          { value:'AGENT',   label:'Field Agent' },
-          { value:'MANAGER', label:'Branch Manager' },
-        ]})}
+        {field('Role', role, setRole, { options:[
+                  { value:'AGENT', label:'Field Agent' },
+
+                  // 🚨 CONDITIONAL RENDERING: Only Admins can see the Manager/Admin options
+                  ...(user.role === 'ADMIN' || user.role === 'SYSTEM_ADMIN' ? [
+                    { value:'MANAGER', label:'Branch Manager' },
+                    { value:'ADMIN', label:'System Admin' }
+                  ] : [])
+
+                ]})}
         {field('Branch',     branchId, setBranch,   { options:[
           { value:'', label:'— None / HQ —' },
           ...branches.map(b => ({ value: String(b.id), label: b.name })),
@@ -248,7 +314,7 @@ function AddAgentForm({ user, branches, onSuccess, onClose }) {
   );
 }
 
-function EditUserModal({ agent, branches, token, onSuccess, onClose }) {
+function EditUserModal({ user, agent, branches, token, onSuccess, onClose }) {
   const [name,     setName]    = useState(agent.name || '');
   const [phone,    setPhone]   = useState(agent.phoneNumber || '');
   const [role,     setRole]    = useState(agent.role || 'AGENT');
@@ -304,10 +370,12 @@ function EditUserModal({ agent, branches, token, onSuccess, onClose }) {
         {field('Name',   name,  setName)}
         {field('Phone',  phone, setPhone)}
         {field('Role',   role,  setRole, { options:[
-          { value:'AGENT',   label:'Field Agent' },
-          { value:'MANAGER', label:'Branch Manager' },
-          { value:'ADMIN',   label:'Admin' },
-        ]})}
+                  { value:'AGENT', label:'Field Agent' },
+                  ...(user.role === 'ADMIN' || user.role === 'SYSTEM_ADMIN' ? [
+                    { value:'MANAGER', label:'Branch Manager' },
+                    { value:'ADMIN', label:'System Admin' }
+                  ] : [])
+                ]})}
         {field('Branch', branchId, setBranch, { options:[
           { value:'', label:'— None / HQ —' },
           ...branches.map(b => ({ value: String(b.id), label: b.name })),
@@ -469,6 +537,7 @@ export default function AdminDashboard({ user, handleLogout }) {
   const [roleFilter, setRoleFilter]     = useState('ALL');
   const [showAddAgent, setShowAddAgent]   = useState(false);
   const [showAddBranch, setShowAddBranch] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false); // 🚨 ADD THIS LINE
   const [editAgent, setEditAgent]         = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [branchName, setBranchName] = useState('');
@@ -1092,6 +1161,9 @@ export default function AdminDashboard({ user, handleLogout }) {
                     {customers.length} customers · portfolio {fmtR(stats?.totalPortfolio || 0)}
                   </p>
                 </div>
+                <button className="btn-primary" onClick={() => setShowAddCustomer(true)}>
+                                  + Add Customer
+                                </button>
               </div>
               <div className="fade-up-1" style={{ marginBottom:20 }}>
                 <div style={{ position:'relative' }}>
@@ -1209,58 +1281,73 @@ export default function AdminDashboard({ user, handleLogout }) {
           )}
 
         </main>
-      </div>
+              </div>
 
-      {/* ── MODALS ── */}
-      {showAddAgent && (
-        <Modal title="Add new user" onClose={() => setShowAddAgent(false)}>
-          <AddAgentForm
-            user={user} branches={branches}
-            onSuccess={async () => {
-              await new Promise(r => setTimeout(r, 300));
-              await fetchAll();
-              setShowAddAgent(false);
-            }}
-            onClose={() => setShowAddAgent(false)}
-          />
-        </Modal>
-      )}
+              {/* ── MODALS ── */}
+              {showAddAgent && (
+                <Modal title="Add new user" onClose={() => setShowAddAgent(false)}>
+                  <AddAgentForm
+                    user={user} branches={branches}
+                    onSuccess={async () => {
+                      await new Promise(r => setTimeout(r, 300));
+                      await fetchAll();
+                      setShowAddAgent(false);
+                    }}
+                    onClose={() => setShowAddAgent(false)}
+                  />
+                </Modal>
+              )}
 
-      {showAddBranch && (
-        <Modal title="Create new branch" onClose={() => setShowAddBranch(false)} maxWidth={400}>
-          <div style={{ marginBottom:14 }}>
-            <label style={{ display:'block', fontSize:11, color:G.textSub, marginBottom:6, letterSpacing:'.06em', textTransform:'uppercase' }}>Branch name</label>
-            <input value={branchName} onChange={e => setBranchName(e.target.value)} placeholder="e.g. Shivaji Nagar Branch"/>
-          </div>
-          <div style={{ marginBottom:20 }}>
-            <label style={{ display:'block', fontSize:11, color:G.textSub, marginBottom:6, letterSpacing:'.06em', textTransform:'uppercase' }}>City</label>
-            <input value={branchCity} onChange={e => setBranchCity(e.target.value)} placeholder="e.g. Pune"/>
-          </div>
-          <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-            <button className="btn-ghost" onClick={() => setShowAddBranch(false)}>Cancel</button>
-            <button className="btn-primary" onClick={addBranch}>Create branch</button>
-          </div>
-        </Modal>
-      )}
+              {showAddBranch && (
+                <Modal title="Create new branch" onClose={() => setShowAddBranch(false)} maxWidth={400}>
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ display:'block', fontSize:11, color:G.textSub, marginBottom:6, letterSpacing:'.06em', textTransform:'uppercase' }}>Branch name</label>
+                    <input value={branchName} onChange={e => setBranchName(e.target.value)} placeholder="e.g. Shivaji Nagar Branch"/>
+                  </div>
+                  <div style={{ marginBottom:20 }}>
+                    <label style={{ display:'block', fontSize:11, color:G.textSub, marginBottom:6, letterSpacing:'.06em', textTransform:'uppercase' }}>City</label>
+                    <input value={branchCity} onChange={e => setBranchCity(e.target.value)} placeholder="e.g. Pune"/>
+                  </div>
+                  <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                    <button className="btn-ghost" onClick={() => setShowAddBranch(false)}>Cancel</button>
+                    <button className="btn-primary" onClick={addBranch}>Create branch</button>
+                  </div>
+                </Modal>
+              )}
 
-      {editAgent && (
-        <Modal title={`Edit — ${editAgent.name}`} onClose={() => setEditAgent(null)}>
-          <EditUserModal
-            agent={editAgent} branches={branches} token={token}
-            onSuccess={async () => { await new Promise(r => setTimeout(r,300)); await fetchAll(); }}
-            onClose={() => setEditAgent(null)}
-          />
-        </Modal>
-      )}
+              {showAddCustomer && (
+                <Modal title="Onboard New Customer" onClose={() => setShowAddCustomer(false)} maxWidth={400}>
+                  <AddCustomerForm
+                    token={token}
+                    onSuccess={async () => {
+                      await new Promise(r => setTimeout(r, 300));
+                      await fetchAll();
+                      setShowAddCustomer(false);
+                    }}
+                    onClose={() => setShowAddCustomer(false)}
+                  />
+                </Modal>
+              )}
 
-      {selectedCustomer && (
-        <Modal title="Financial Profile" onClose={() => setSelectedCustomer(null)}>
-          <CustomerProfileModal
-            customer={selectedCustomer} token={token}
-            onSuccess={fetchAll} onClose={() => setSelectedCustomer(null)}
-          />
-        </Modal>
-      )}
-    </>
-  );
-}
+              {editAgent && (
+                <Modal title={`Edit — ${editAgent.name}`} onClose={() => setEditAgent(null)}>
+                  <EditUserModal
+                    user={user}
+                    agent={editAgent} branches={branches} token={token}
+                    onSuccess={async () => { await new Promise(r => setTimeout(r,300)); await fetchAll(); }}
+                    onClose={() => setEditAgent(null)}
+                  />
+                </Modal>
+              )}
+
+              {selectedCustomer && (
+                <Modal title="Financial Profile" onClose={() => setSelectedCustomer(null)}>
+                  <CustomerProfileModal
+                    customer={selectedCustomer} token={token}
+                    onSuccess={fetchAll} onClose={() => setSelectedCustomer(null)}
+                  />
+                </Modal>
+              )}
+            </>
+          );
+        }
