@@ -32,6 +32,7 @@ public class TransactionController {
     @Autowired private UserRepository userRepository;
     @Autowired private CustomerRepository customerRepository;
     @Autowired private JwtService jwtService;
+    @Autowired private com.pigmypay.PSolutions.service.NotificationService notificationService;
 
     // Helper: extracts the raw token string
     private String extractToken(String authHeader) {
@@ -103,7 +104,7 @@ public class TransactionController {
             savedTransaction.setSettlementStatus("UNSETTLED");
 
             transactionRepository.save(savedTransaction);
-
+            notificationService.sendWhatsAppReceipt(savedTransaction);
             return ResponseEntity.ok(savedTransaction);
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,7 +182,7 @@ public class TransactionController {
             emiPayment.setAssociatedLoan(currentLoan);
 
             transactionRepository.save(emiPayment);
-
+            notificationService.sendWhatsAppReceipt(emiPayment);
             return ResponseEntity.ok(emiPayment);
         } catch (Exception e) {
             e.printStackTrace();

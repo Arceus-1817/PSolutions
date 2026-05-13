@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import jakarta.persistence.Transient;
 
 @Data
 @Entity
@@ -33,6 +34,13 @@ public class Customer {
     @ManyToOne // Links the customer to a specific agent
     @JoinColumn(name = "assigned_agent_id")
     private User assignedAgent;
+
+    @Transient
+    private BigDecimal activeDailyEmi;
+
+    // Generate Getter and Setter
+    public BigDecimal getActiveDailyEmi() { return activeDailyEmi; }
+    public void setActiveDailyEmi(BigDecimal activeDailyEmi) { this.activeDailyEmi = activeDailyEmi; }
 
     private BigDecimal currentBalance = BigDecimal.ZERO;
     private LocalDateTime createdAt = LocalDateTime.now();

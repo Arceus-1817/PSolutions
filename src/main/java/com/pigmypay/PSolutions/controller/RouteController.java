@@ -30,6 +30,7 @@ public class RouteController {
     @Autowired private UserRepository userRepository;
     @Autowired private BranchRepository branchRepository; // 🚨 Added this!
     @Autowired private JwtService jwtService;
+    @Autowired private com.pigmypay.PSolutions.repository.LoanRepository loanRepository;
 
     private String extractToken(String authHeader) {
         return authHeader.substring(7);
@@ -94,7 +95,21 @@ public class RouteController {
     public ResponseEntity<?> getMyDailyRoute(@RequestHeader("Authorization") String authHeader) {
         User agent = userRepository.findByEmail(jwtService.extractUsername(extractToken(authHeader))).orElseThrow();
         List<AgentShift> activeShifts = agentShiftRepository.findByAgentIdAndStatus(agent.getId(), "ACTIVE");
+
         if (activeShifts.isEmpty()) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(customerRepository.findByRouteIdOrderByRouteSequenceAsc(activeShifts.get(0).getRoute().getId()));
+
+        List<Customer> routeCustomers = customerRepository.findByRouteIdOrderByRouteSequenceAsc(activeShifts.get(0).getRoute().getId());
+
+        // 🚨 ADD THIS LOOP: Check every customer for an active loan and attach the EMI
+        for (Customer c : routeCustomers) {
+            List<com.pigmypay.PSolutions.model.Loan> loans = loanRepository.findByCustomerIdAndStatus(c.getId(), "ACTIVE");
+            if (!loans.isEmpty()) {
+                c.setActiveDailyEmi(loans.get(0).getDailyEmiAmount());
+            } else {
+                c.setActiveDailyEmi(java.math.BigDecimal.ZERO);
+            }
+        }
+
+        return ResponseEntity.ok(routeCustomers);
     }
 }
